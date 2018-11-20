@@ -1,0 +1,13 @@
+.ycm_extra_conf.py
+*.o
+*.log
+*.mp4
+*.flv
+
+/FFmpeg
+/resource
+/SECRET.md
+
+/rtmp2jpeg
+/rtmp2flv
+/tmp
