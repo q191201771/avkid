@@ -33,13 +33,13 @@ bool Input::read() {
   AVPacket pkt = {0};
 
   while (!stop_read_flag_ && av_read_frame(in_fmt_ctx_, &pkt) >= 0) {
-    if (obs_) {
+    if (ph_) {
       int ct = in_fmt_ctx_->streams[pkt.stream_index]->codecpar->codec_type;
       if (ct != AVMEDIA_TYPE_AUDIO && ct != AVMEDIA_TYPE_VIDEO) {
         AVKID_LOG_ERROR << "Unknown codec type:" << ct << "\n";
         continue;
       }
-      obs_->packet_cb(&pkt, ct == AVMEDIA_TYPE_AUDIO);
+      ph_->packet_cb(&pkt, ct == AVMEDIA_TYPE_AUDIO);
     }
 
     av_packet_unref(&pkt);

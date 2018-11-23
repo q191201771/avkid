@@ -34,27 +34,31 @@ namespace avkid {
 #define CHEF_H264_NAL_UNIT_TYPE_SEI       6
 #define CHEF_H264_NAL_UNIT_TYPE_SPS       7
 #define CHEF_H264_NAL_UNIT_TYPE_PPS       8
+#define CHEF_H264_NAL_UNIT_TYPE_AUD       9
 //H264_NAL_DPA             = 2,
 //H264_NAL_DPB             = 3,
 //H264_NAL_DPC             = 4,
-//H264_NAL_AUD             = 9,
 //H264_NAL_END_SEQUENCE    = 10,
 //H264_NAL_END_STREAM      = 11,
 //H264_NAL_FILLER_DATA     = 12,
 //H264_NAL_SPS_EXT         = 13,
 //H264_NAL_AUXILIARY_SLICE = 19,
 
-// 一般来说，整个字节称为NAL header，低5位称为NAL unit type
-//#define CHEF_NAL_HEADER_TYPE_B_SLICE 0x01 // 1
-//#define CHEF_NAL_HEADER_TYPE_SEI     0x06 // 6
-//#define CHEF_NAL_HEADER_TYPE_P_SLICE 0x41 // 65
-//#define CHEF_NAL_HEADER_TYPE_IDR     0x65 // 101
-//#define CHEF_NAL_HEADER_TYPE_SPS     0x67 // 103
-//#define CHEF_NAL_HEADER_TYPE_PPS     0x68 // 104
-
 // #define CHEF_SPS_PROFILE_IDC_PROFILE_BASELINE 0x66
 // #define CHEF_SPS_PROFILE_IDC_PROFILE_MAIN     0x77
 // #define CHEF_SPS_PROFILE_IDC_PROFILE_EXTENDED 0x88
+
+class PacketHandler {
+  public:
+    virtual ~PacketHandler() {}
+    virtual void packet_cb(AVPacket *pkt, bool is_audio) = 0;
+};
+
+class FrameHandler {
+  public:
+    virtual ~FrameHandler() {}
+    virtual void frame_cb(AVFrame *frame, bool is_audio) = 0;
+};
 
 static void global_init_ffmpeg() {
   av_log_set_level(AV_LOG_DEBUG);

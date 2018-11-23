@@ -24,7 +24,7 @@ std::string jpeg_filename() {
   return std::string(buf);
 }
 
-class DecodeObServerImpl : public DecodeObserver {
+class DecodeObServerImpl : public FrameHandler {
   public:
     virtual void frame_cb(AVFrame *av_frame, bool is_audio) {
       if (is_audio || av_frame->key_frame != 1) { return; }

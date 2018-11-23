@@ -2,8 +2,8 @@
 
 namespace avkid {
 
-Decode::Decode(DecodeObserver *obs, bool async_mode)
-  : obs_(obs)
+Decode::Decode(FrameHandler *fh, bool async_mode)
+  : fh_(fh)
   , async_mode_(async_mode)
 {
   if (async_mode) {
@@ -48,7 +48,7 @@ bool Decode::do_packet_(AVPacket *pkt, bool is_audio) {
     goto END;
   }
 
-  if (obs_) { obs_->frame_cb(frame, is_audio); }
+  if (fh_) { fh_->frame_cb(frame, is_audio); }
 
 END:
   av_packet_unref(pkt);

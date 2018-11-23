@@ -13,7 +13,7 @@
 namespace avkid {
 
 // TODO sync method
-class Output : public InputObserver {
+class Output : public PacketHandler {
   public:
     Output(bool async_mode);
     ~Output();
@@ -23,7 +23,7 @@ class Output : public InputObserver {
 
     bool do_packet(AVPacket *pkt, bool is_audio);
 
-  public: // InputObserver
+  public: // PacketHandler
     virtual void packet_cb(AVPacket *pkt, bool is_audio);
 
   private:
