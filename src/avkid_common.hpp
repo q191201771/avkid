@@ -21,6 +21,7 @@ extern "C" {
   #include <libavcodec/avcodec.h>
   #include <libavutil/samplefmt.h>
   #include <libavutil/timestamp.h>
+  #include <libavutil/imgutils.h>
   #include <libavfilter/avfilter.h>
   #include <libswscale/swscale.h>
 }
@@ -118,6 +119,31 @@ static void serialize_to_extradata(unsigned short sps_len,
   i += pps_len;
 
   *extradata_size = i;
+}
+
+static AVFrame *scale_video_frame(AVFrame *frame, int width, int height) {
+  int iret = -1;
+  AVFrame *dst_frame = av_frame_alloc();
+  dst_frame->width = width;
+  dst_frame->height = height;
+  int n = av_image_get_buffer_size((enum AVPixelFormat)frame->format, width, height, 1);
+  uint8_t *buf = (uint8_t *)av_malloc(n * sizeof(uint8_t));
+  AVKID_LOG_DEBUG << "wh:" << dst_frame->width << " " << dst_frame->height << "\n";
+
+  if ((iret = av_image_fill_arrays(dst_frame->data, dst_frame->linesize, buf, (enum AVPixelFormat)frame->format, width, height, 1)) < 0) {
+    AVKID_LOG_ERROR << "\n";
+    return nullptr;
+  }
+  AVKID_LOG_DEBUG << "wh:" << dst_frame->width << " " << dst_frame->height << "\n";
+
+  SwsContext *sws_ctx = sws_getContext(frame->width, frame->height, (enum AVPixelFormat)frame->format,
+                                       width, height, (enum AVPixelFormat)frame->format,
+                                       SWS_BICUBIC, nullptr, nullptr, nullptr);
+
+  sws_scale(sws_ctx, (const uint8_t * const*)frame->data, frame->linesize, 0, frame->height, dst_frame->data, dst_frame->linesize);
+  sws_freeContext(sws_ctx);
+
+  return dst_frame;
 }
 
 static bool dump_mjpeg(AVFrame *frame, const std::string &filename) {
