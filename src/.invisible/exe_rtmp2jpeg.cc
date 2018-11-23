@@ -1,16 +1,13 @@
 #include <stdio.h>
-#include "avkid_input.h"
-#include "avkid_decode.h"
+#include "avkid_in.h"
 #include "avkid_log_adapter.hpp"
 
 using namespace avkid;
 
-Input *g_input = nullptr;
-Decode *g_decode = nullptr;
+In *g_in;
 
 std::string g_in_url;
 int g_jpeg_total;
-bool g_decode_async_mode;
 
 int g_jpeg_count = 0;
 
@@ -22,8 +19,10 @@ std::string jpeg_filename() {
   return std::string(buf);
 }
 
-class DecodeObServerImpl : public DecodeObserver {
+class InObserverImpl : public InObserver {
   public:
+    virtual void packet_cb(AVPacket *av_packet, bool is_audio) {  }
+
     virtual void frame_cb(AVFrame *av_frame, bool is_audio) {
       if (is_audio || av_frame->key_frame != 1) { return; }
 
@@ -34,8 +33,8 @@ class DecodeObServerImpl : public DecodeObserver {
 };
 
 int main(int argc, char **argv) {
-  if (argc < 4) {
-    AVKID_LOG_ERROR << "Usage: " << argv[0] << " <rtmp url> <num of jpeg> <decode async mode>\n";
+  if (argc != 3) {
+    AVKID_LOG_ERROR << "Usage: " << argv[0] << " <rtmp url> <num of jpeg>\n";
     return -1;
   }
 
@@ -43,20 +42,15 @@ int main(int argc, char **argv) {
 
   g_in_url = argv[1];
   g_jpeg_total = atoi(argv[2]);
-  g_decode_async_mode = atoi(argv[3]);
 
-  DecodeObServerImpl *doi = new DecodeObServerImpl();
-  g_decode = new Decode(doi, g_decode_async_mode);
-  g_input = new Input(g_decode);
-  if (!g_input->open(g_in_url)) {
+  InObserverImpl ioi;
+  g_in = new In(&ioi, true);
+  if (!g_in->open(g_in_url)) {
     AVKID_LOG_ERROR << "open " << g_in_url << " failed.\n";
     return -1;
   }
-  g_decode->open(g_input->in_fmt_ctx());
-  g_input->read();
+  g_in->read();
+  delete g_in;
 
-  delete g_input;
-  delete g_decode;
-  delete doi;
   return 0;
 }

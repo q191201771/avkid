@@ -8,22 +8,23 @@
 using namespace avkid;
 
 std::string g_in_url;
-int g_record_sec;
-bool g_record_audio = true;
-bool g_record_video = true;
+int  g_record_sec;
+bool g_record_audio;
+bool g_record_video;
+bool g_transcode;
 
 In *g_in;
 Out *g_out;
 
 std::string produce_filename() {
   char buf[128] = {0};
-  snprintf(buf, 127, "./resource/out_rtmp2flv_%llu.flv", chef::stuff_op::unix_timestamp_msec());
+  snprintf(buf, 127, "./resource/out_rtmp2flv_%llu_a%d_v%d_t%d.flv", chef::stuff_op::unix_timestamp_msec(), g_record_audio, g_record_video, g_transcode);
   return std::string(buf);
 }
 
 int main(int argc, char **argv) {
-  if (argc != 3) {
-    AVKID_LOG_ERROR << "Usage: %s <rtmp url> <record sec>\n";
+  if (argc != 6) {
+    AVKID_LOG_ERROR << "Usage: %s <rtmp url> <record sec> <record audio> <record video> <transcode>\n";
     return -1;
   }
 
@@ -31,10 +32,14 @@ int main(int argc, char **argv) {
 
   g_in_url = argv[1];
   g_record_sec = atoi(argv[2]);
+  g_record_audio = atoi(argv[3]);
+  g_record_video = atoi(argv[4]);
+  g_transcode = atoi(argv[5]);
 
-  g_out = new Out();
 
-  g_in = new In(g_out);
+  g_out = new Out(g_transcode ? Out::INPUT_TYPE_AV_FRAME : Out::INPUT_TYPE_AV_PACKET);
+
+  g_in = new In(g_out, true);
   if (!g_in->open(g_in_url)) {
     AVKID_LOG_ERROR << "open " << g_in_url << " failed.\n";
     return -1;

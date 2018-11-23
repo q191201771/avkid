@@ -14,6 +14,8 @@
 #define AVKID_LOG_WARN  std::cout << "WARN  " << chef::stuff_op::tick_msec() << " " << __FILE__ << ":" << __LINE__ << " "
 #define AVKID_LOG_ERROR std::cout << "ERROR " << chef::stuff_op::tick_msec() << " " << __FILE__ << ":" << __LINE__ << " "
 
+#define AVKID_LOG_FFMPEG_ERROR(iret) AVKID_LOG_ERROR << stringify_ffmpeg_error(iret) << "\n";
+
 #define FFMPEG_FAILED_LOG(funcname, ret) AVKID_LOG_ERROR << funcname << " failed. " << stringify_ffmpeg_error(ret) << "\n";
 
 #define RETURN_FALSE_IF_NULL(x, funcname) if (!x) { AVKID_LOG_ERROR << funcname << "failed.\n"; return false; }

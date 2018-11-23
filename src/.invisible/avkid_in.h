@@ -24,7 +24,7 @@ class InObserver {
 
 class In {
   public:
-    In(InObserver *observer) : observer_(observer) {}
+    In(InObserver *observer, bool should_decode) : observer_(observer), should_decode_(should_decode) {}
     ~In();
 
     /**
@@ -59,6 +59,10 @@ class In {
     static int interrupt_cb(void *opaque);
 
   private:
+    In(const In &);
+    In &operator=(const In &);
+
+  private:
     std::string url_ ;
     uint64_t    open_ms_ = 0;
     uint64_t    timeout_ms_ = 0;
@@ -74,6 +78,7 @@ class In {
     int           audio_frame_count_ = 0;
 
     InObserver *observer_ = NULL;
+    bool should_decode_ = false;
 
     bool stop_flag_ = false;
 

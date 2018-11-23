@@ -6,8 +6,11 @@
 
 /FFmpeg
 /resource
-/SECRET.md
 
+/SECRET.md
 /rtmp2jpeg
 /rtmp2flv
+/rtmpdump
+/tag_nalus
+/diff.sh
 /tmp

@@ -8,15 +8,22 @@ namespace avkid {
 static void __log_packet(const AVFormatContext *fmt_ctx, const AVPacket *pkt)
 {
   AVRational *time_base = &fmt_ctx->streams[pkt->stream_index]->time_base;
+  uint32_t calc_size = ntohl(*((uint32_t *)(pkt->data)));
 
-  printf("pts:%s pts_time:%s dts:%s dts_time:%s duration:%s duration_time:%s stream_index:%d\n",
+  printf("pts:%s pts_time:%s dts:%s dts_time:%s duration:%s duration_time:%s stream_index:%d size:%d buf.size:%d calc_size:%d\n",
          av_ts2str(pkt->pts), av_ts2timestr(pkt->pts, time_base),
          av_ts2str(pkt->dts), av_ts2timestr(pkt->dts, time_base),
          av_ts2str(pkt->duration), av_ts2timestr(pkt->duration, time_base),
-         pkt->stream_index);
+         pkt->stream_index,
+         pkt->size,
+         pkt->buf->size,
+         calc_size);
+
+  //av_pkt_dump_log2(NULL, 0, pkt, 0, fmt_ctx->streams[pkt->stream_index]);
 }
 
-Out::Out() {
+Out::Out(InputType it) {
+  input_type_ = it;
   thread_ = new chef::task_thread("out", chef::task_thread::RELEASE_MODE_DO_ALL_DONE);
   thread_->start();
 }
@@ -134,14 +141,8 @@ bool Out::open_audio() {
     return false;
   }
 
-  AVKID_LOG_DEBUG << "audio frame size:" << audio_cc_->frame_size;
+  AVKID_LOG_DEBUG << "audio frame size:" << audio_cc_->frame_size << "\n";
   int nb_samples = audio_cc_->frame_size;
-
-  //audio_frame_ = __alloc_audio_frame(audio_cc_->sample_fmt, audio_cc_->channel_layout, audio_cc_->sample_rate, nb_samples);
-  //if (!audio_frame_) {
-  //  AVKID_LOG_INFO << "Func alloc_audio_frame failed.\n";
-  //  return false;
-  //}
 
   iret = avcodec_parameters_from_context(audio_stream_->codecpar, audio_cc_);
   if (iret < 0) {
@@ -187,7 +188,7 @@ bool Out::add_video_stream() {
   video_cc_->pix_fmt = pix_fmt_;
   // video_cc_->pix_fmt = AV_PIX_FMT_YUV420P;
   // video_cc_->frame_size = 0;
-  video_cc_->framerate.num = 25;
+  video_cc_->framerate.num = 15;
   video_cc_->framerate.den = 1;
 
   video_cc_->codec_id = codec_id;
@@ -198,26 +199,28 @@ bool Out::add_video_stream() {
   if (fmt_ctx_->oformat->flags & AVFMT_GLOBALHEADER) {
     video_cc_->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
   }
-  // if (0) {
-  //   uint8_t extradata[1024] = {0};
-  //   int extradata_size = 0;
-  //   serialize_to_extradata(sps_len_, sps_data_, pps_len_, pps_data_, extradata, &extradata_size);
-  //   video_cc_->extradata = (uint8_t *)av_mallocz(extradata_size);
-  //   memcpy(video_cc_->extradata, extradata, extradata_size);
-  //   video_cc_->extradata_size = extradata_size;
-  // }
+  if (1) {
+    uint8_t extradata[1024] = {0};
+    int extradata_size = 0;
+    serialize_to_extradata(sps_len_, sps_data_, pps_len_, pps_data_, extradata, &extradata_size);
+    video_cc_->extradata = (uint8_t *)av_mallocz(extradata_size);
+    memcpy(video_cc_->extradata, extradata, extradata_size);
+    video_cc_->extradata_size = extradata_size;
+    //video_stream_->codecpar->extradata = video_cc_->extradata;
+    //video_stream_->codecpar->extradata_size = video_cc_->extradata_size;
+  }
 
-  // metadata
-  // AVRational display_aspect_ratio;
-  // av_reduce(&display_aspect_ratio.num, &display_aspect_ratio.den,
-  //           width_, height_, 1024*1024);
+  //metadata
+  //AVRational display_aspect_ratio;
+  //av_reduce(&display_aspect_ratio.num, &display_aspect_ratio.den,
+  //          width_, height_, 1024*1024);
 
-  // char buf[128];
-  // snprintf(buf, 127, "%d:%d", display_aspect_ratio.num, display_aspect_ratio.den);
+  //char buf[128];
+  //snprintf(buf, 127, "%d:%d", display_aspect_ratio.num, display_aspect_ratio.den);
 
-  // av_dict_set(&fmt_ctx_->metadata, "framerate", "20", AV_DICT_DONT_OVERWRITE);
-  // av_dict_set(&fmt_ctx_->metadata, "display_aspect_ratio", buf, 0);
-  // av_dict_set(&fmt_ctx_->metadata, "hasVideo", "true", 0);
+  //av_dict_set(&fmt_ctx_->metadata, "framerate", "15", AV_DICT_DONT_OVERWRITE);
+  //av_dict_set(&fmt_ctx_->metadata, "display_aspect_ratio", buf, 0);
+  //av_dict_set(&fmt_ctx_->metadata, "hasVideo", "true", 0);
 
   return true;
 }
@@ -233,13 +236,6 @@ bool Out::open_video() {
     FFMPEG_FAILED_LOG("avcodec_open2", iret);
     return false;
   }
-
-  //video_frame_ = __alloc_video_frame(video_cc_->pix_fmt, video_cc_->width, video_cc_->height);
-  //if (!video_frame_) {
-  //  AVKID_LOG_INFO << "Func __alloc_video_frame failed.\n";
-  //  return false;
-  //}
-  ////AVKID_LOG_DEBUG << "Temp pts:" << video_frame_->pts << "\n";
 
   iret = avcodec_parameters_from_context(video_stream_->codecpar, video_cc_);
   if (iret < 0) {
@@ -313,25 +309,62 @@ bool Out::open(const std::string &url, uint64_t timeout_ms) {
   return true;
 }
 
-//void Out::write_packet(AVPacket *av_packet, bool is_audio) {
-//  is_audio ? write_audio_packet(av_packet) : write_video_packet(av_packet);
-//}
-//
-//void Out::write_audio_packet(AVPacket *av_packet) {
-//  //AVKID_LOG_DEBUG << "write_audio_packet\n";
-//
-//  //av_packet_rescale_ts(av_packet, audio_cc_->time_base, audio_stream_->time_base);
-//  //av_packet->stream_index = audio_stream_->index;
-//
-//  //int iret = av_interleaved_write_frame(fmt_ctx_, av_packet);
-//  //if (iret < 0) {
-//  //  FFMPEG_FAILED_LOG("av_interleaved_write_frame", iret);
-//  //  return;
-//  //}
-//}
-//
-//void Out::write_video_packet(AVPacket *av_packet) {
-//}
+void Out::write_packet(AVPacket *av_packet, bool is_audio) {
+  is_audio ? write_audio_packet(av_packet) : write_video_packet(av_packet);
+  //av_packet_unref(av_packet);
+}
+
+void Out::write_audio_packet(AVPacket *packet) {
+  int iret = -1;
+
+  //AVKID_LOG_DEBUG << "write audio frame origin. -b pts:" << packet->pts
+  //                     << " nb_samples:" << audio_cc_->frame_size
+  //                     << "\n";
+  packet->pts = av_rescale_q(audio_samples_count, (AVRational){1, audio_cc_->sample_rate}, audio_cc_->time_base);
+  //AVKID_LOG_DEBUG << "write audio frame origin. -a pts:" << packet->pts
+  //                     << " nb_samples:" << audio_cc_->frame_size
+  //                     << "\n";
+  audio_samples_count += audio_cc_->frame_size;
+
+  av_packet_rescale_ts(packet, audio_cc_->time_base, audio_stream_->time_base);
+  packet->dts = packet->pts;
+  //AVKID_LOG_DEBUG << "CHEF -a audio pts:" << packet.pts << " dts:" << packet.dts << "\n";
+  packet->stream_index = audio_stream_->index;
+
+  //__log_packet(fmt_ctx_, packet);
+
+  iret = av_interleaved_write_frame(fmt_ctx_, packet);
+  if (iret < 0) {
+    FFMPEG_FAILED_LOG("av_interleaved_write_frame", iret);
+    return;
+  }
+}
+
+void Out::write_video_packet(AVPacket *packet) {
+  uint8_t nal_unit_type = packet->data[4] & 0x1f;
+  if (nal_unit_type == CHEF_H264_NAL_UNIT_TYPE_IDR_SLICE) {
+    uint8_t extradata[1024] = {0};
+    int extradata_size = 0;
+    AVKID_LOG_DEBUG << "CHEFERASEME sps_len:" << sps_len_ << " pps_len:" << pps_len_ << "\n";
+    serialize_to_extradata(sps_len_, sps_data_, pps_len_, pps_data_, extradata, &extradata_size);
+
+    uint8_t* psd = av_packet_new_side_data(packet, AV_PKT_DATA_NEW_EXTRADATA, extradata_size);
+    memcpy(psd, extradata, extradata_size);
+  }
+
+  packet->pts = video_next_pts_++;
+  av_packet_rescale_ts(packet, video_cc_->time_base, video_stream_->time_base);
+  packet->dts = packet->pts;
+  packet->stream_index = video_stream_->index;
+
+  //__log_packet(fmt_ctx_, packet);
+
+  int iret = av_interleaved_write_frame(fmt_ctx_, packet);
+  if (iret < 0) {
+    FFMPEG_FAILED_LOG("av_interleaved_write_frame", iret);
+    return;
+  }
+}
 
 void Out::write_frame(AVFrame *av_frame, bool is_audio) {
   is_audio ? write_audio_frame(av_frame) : write_video_frame(av_frame);
@@ -339,30 +372,18 @@ void Out::write_frame(AVFrame *av_frame, bool is_audio) {
 
 void Out::write_audio_frame(AVFrame *av_frame) {
   if (!has_audio_) { return; }
-  //return;
 
   int iret = 0;
-  int got_packet = 0;
   AVPacket packet = {0};
 
-  //av_frame_copy(audio_frame_, av_frame);
-
-  AVKID_LOG_DEBUG << "write audio frame origin. -b pts:" << av_frame->pts
-                       << " nb_samples:" << av_frame->nb_samples
-                       << "\n";
+  //AVKID_LOG_DEBUG << "write audio frame origin. -b pts:" << av_frame->pts
+  //                     << " nb_samples:" << av_frame->nb_samples
+  //                     << "\n";
   av_frame->pts = av_rescale_q(audio_samples_count, (AVRational){1, audio_cc_->sample_rate}, audio_cc_->time_base);
   //AVKID_LOG_DEBUG << "write audio frame origin. -a pts:" << av_frame->pts
   //                     << " nb_samples:" << av_frame->nb_samples
   //                     << "\n";
   audio_samples_count += av_frame->nb_samples;
-
-  av_init_packet(&packet);
-
-  //iret = avcodec_encode_audio2(audio_cc_, &packet, av_frame, &got_packet);
-  //if (iret < 0) {
-  //  FFMPEG_FAILED_LOG("avcodec_encode_audio2", iret);
-  //  return;
-  //}
 
   iret = avcodec_send_frame(audio_cc_, av_frame);
   if (iret < 0) {
@@ -387,7 +408,7 @@ void Out::write_audio_frame(AVFrame *av_frame) {
     //AVKID_LOG_DEBUG << "CHEF -a audio pts:" << packet.pts << " dts:" << packet.dts << "\n";
     packet.stream_index = audio_stream_->index;
 
-    __log_packet(fmt_ctx_, &packet);
+    //__log_packet(fmt_ctx_, &packet);
 
     iret = av_interleaved_write_frame(fmt_ctx_, &packet);
     if (iret < 0) {
@@ -402,14 +423,9 @@ void Out::write_video_frame(AVFrame *av_frame) {
   if (!has_video_) { return; }
 
   int iret = 0;
-  int got_packet = 0;
   AVPacket packet = {0};
 
-  //av_frame_copy(video_frame_, av_frame);
-
   av_frame->pts = video_next_pts_++;
-
-  av_init_packet(&packet);
 
   iret = avcodec_send_frame(video_cc_, av_frame);
   if (iret < 0) {
@@ -427,11 +443,8 @@ void Out::write_video_frame(AVFrame *av_frame) {
 
     av_packet_rescale_ts(&packet, video_cc_->time_base, video_stream_->time_base);
     packet.stream_index = video_stream_->index;
-    AVKID_LOG_DEBUG << "< video frame pts:" << av_frame->pts << " " << av_frame->pts
-                         << " packet pts:" << packet.pts
-                         << " timebase:" << video_cc_->time_base.den << " " << video_cc_->time_base.num << "\n";
 
-    __log_packet(fmt_ctx_, &packet);
+    //__log_packet(fmt_ctx_, &packet);
 
     iret = av_interleaved_write_frame(fmt_ctx_, &packet);
     if (iret < 0) {
@@ -451,13 +464,35 @@ void Out::write_video_frame(AVFrame *av_frame) {
 }
 
 void Out::packet_cb(AVPacket *av_packet, bool is_audio) {
-  //write_packet(av_packet, is_audio);
+  if (input_type_ == INPUT_TYPE_AV_FRAME) { return; }
+  if (is_audio && !has_audio_) { return; }
+  if (!is_audio && !has_video_) { return; }
+  //AVKID_LOG_DEBUG << "CHEFERASEME origin video packet pts and dts:" << av_packet->pts << " " << av_packet->dts << "\n";
+  //async_do_packet(av_packet, is_audio);
+  AVPacket *packet = av_packet_clone(av_packet);
+  write_packet(packet, is_audio);
+  //av_packet_unref(packet);
 }
 
 void Out::frame_cb(AVFrame *av_frame, bool is_audio) {
-  async_encode_frame(av_frame, is_audio);
+  //AVKID_LOG_DEBUG << "CHEFERASEME origin video frame pts and dts:" << av_frame->pts << " " << av_frame->pkt_dts << "\n";
+  async_do_frame(av_frame, is_audio);
 }
-void Out::async_encode_frame(AVFrame *av_frame, bool is_audio) {
+
+void Out::async_do_packet(AVPacket *av_packet, bool is_audio) {
+  if (input_type_ == INPUT_TYPE_AV_FRAME) { return; }
+  if (is_audio && !has_audio_) { return; }
+  if (!is_audio && !has_video_) { return; }
+
+  AVPacket *packet = av_packet_clone(av_packet);
+  thread_->add(chef::bind(&Out::write_packet, this, packet, is_audio));
+}
+
+void Out::async_do_frame(AVFrame *av_frame, bool is_audio) {
+  if (input_type_ == INPUT_TYPE_AV_PACKET) { return; }
+  if (is_audio && !has_audio_) { return; }
+  if (!is_audio && !has_video_) { return; }
+
   AVFrame *frame = av_frame_clone(av_frame);
   thread_->add(chef::bind(&Out::write_frame, this, frame, is_audio));
 }

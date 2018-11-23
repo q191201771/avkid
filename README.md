@@ -1,23 +1,44 @@
 # avkid
 
-用ffmpeg做一些音视频相关的工作~
+学习ffmpeg，做一些音视频方便的事，后面会写文档介绍avkid中各模块的功能划分以及如何组合工作~
 
-## 现在可以做啥
+## 核心模块
+
+TODO
+
+## 使用avkid的示范
 
 ### 1. http-flv截图
 
 ```
 /src/exe_rtmp2jpeg.cc
-input: 拉取http-flv格式流
-output: 把视频中的每个I帧解码再编码成jpeg图片文件存放在本地磁盘
+input: 拉取http-flv格式流（其他格式待测试）
+output: 对视频中的I帧存储为本地jpeg图片文件
+
+* 支持截图n张后停止
 ```
 
 ### 2. http-flv录制
 
 ```
-/src/exe_rtmp2flv.cc
-input: 拉取http-flv格式流
-output: 解码再编码（编码格式和解码格式相同）后存储为本地flv格式文件
+/src/exe_rtmpdump.cc
+input: 拉取http-flv格式流（其他格式待测试）
+output: 存储为本地flv格式文件（其他格式待测试）
+
+* 支持录制固定时长后停止
+
+TODO
+* 支持只录制音频或视频
+* 支持同步、异步解码
+```
+
+## 未使用avkid的程序（和音视频相关，临时先放这）
+
+### 1. 分析flv文件中的nalu包
+
+```
+/src/exe_tag_nalus.cc
+分析flv文件中的video tag中的nalu包的情况
 ```
 
 ## 我的环境

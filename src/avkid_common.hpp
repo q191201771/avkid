@@ -97,25 +97,23 @@ static void serialize_to_extradata(unsigned short sps_len,
                                    uint8_t *extradata,
                                    int *extradata_size)
 {
+  int i = 0;
   uint8_t *p = extradata;
-  p[0] = 0x01;
-  p[1] = sps_data[1];
-  p[2] = sps_data[2];
-  p[3] = sps_data[3];
-  p[4] = 0xff;
-  p[5] = 0xe1;
+  p[i++] = 0x01;
+  p[i++] = sps_data[1];
+  p[i++] = sps_data[2];
+  p[i++] = sps_data[3];
+  p[i++] = 0xff;
+  p[i++] = 0xe1;
 
-  int i = 6;
-  unsigned short sps_len_ns = htons(sps_len);
-  memcpy(&p[i], (const void *)(&sps_len_ns), 2);
-  i += 2;
+  p[i++] = (sps_len >> 8) & 0xff;
+  p[i++] = sps_len & 0xff;
   memcpy(&p[i], sps_data, sps_len);
   i += sps_len;
 
   p[i++] = 0x01;
-  unsigned short pps_len_ns = htons(pps_len);
-  memcpy(&p[i], (const void *)(&pps_len_ns), 2);
-  i += 2;
+  p[i++] = (pps_len >> 8) & 0xff;
+  p[i++] = pps_len & 0xff;
   memcpy(&p[i], pps_data, pps_len);
   i += pps_len;
 
@@ -126,14 +124,14 @@ static bool dump_mjpeg(AVFrame *frame, const std::string &filename) {
   int ret;
   bool bret = false;
 
-  AVFormatContext *fmt_ctx = NULL;
-  AVCodec *codec = NULL;
-  AVStream *stream = NULL;
-  AVCodecContext *cc = NULL;
+  AVFormatContext *fmt_ctx = nullptr;
+  AVCodec *codec = nullptr;
+  AVStream *stream = nullptr;
+  AVCodecContext *cc = nullptr;
   AVPacket packet;
   AVCodecID codec_id = AV_CODEC_ID_MJPEG;
 
-  avformat_alloc_output_context2(&fmt_ctx, NULL, NULL, filename.c_str());
+  avformat_alloc_output_context2(&fmt_ctx, nullptr, nullptr, filename.c_str());
   if (!fmt_ctx) {
     AVKID_LOG_ERROR << "Func avformat_alloc_output_context2 failed.\n";
     goto END;
@@ -147,7 +145,7 @@ static bool dump_mjpeg(AVFrame *frame, const std::string &filename) {
     goto END;
   }
 
-  stream = avformat_new_stream(fmt_ctx, NULL);
+  stream = avformat_new_stream(fmt_ctx, nullptr);
   if (!stream) {
     AVKID_LOG_ERROR << "\n";
     goto END;
@@ -172,7 +170,7 @@ static bool dump_mjpeg(AVFrame *frame, const std::string &filename) {
   stream->time_base = (AVRational){1, 25};
   cc->time_base = stream->time_base;
 
-  ret = avcodec_open2(cc, codec, NULL);
+  ret = avcodec_open2(cc, codec, nullptr);
   if (ret < 0) {
     FFMPEG_FAILED_LOG("avcodec_open2", ret);
     goto END;
@@ -184,7 +182,7 @@ static bool dump_mjpeg(AVFrame *frame, const std::string &filename) {
     goto END;
   }
 
-  ret = avformat_write_header(fmt_ctx, NULL);
+  ret = avformat_write_header(fmt_ctx, nullptr);
   if (ret < 0) {
     FFMPEG_FAILED_LOG("avformat_write_header", ret);
     goto END;
@@ -231,7 +229,7 @@ static AVFrame *__alloc_audio_frame(enum AVSampleFormat sample_fmt, uint64_t cha
 
   if (!frame) {
     AVKID_LOG_INFO << "Func alloc_audio_frame failed.\n";
-    return NULL;
+    return nullptr;
   }
 
   frame->format = sample_fmt;
@@ -243,7 +241,7 @@ static AVFrame *__alloc_audio_frame(enum AVSampleFormat sample_fmt, uint64_t cha
     ret = av_frame_get_buffer(frame, 0);
     if (ret < 0) {
       FFMPEG_FAILED_LOG("av_frame_get_buffer", ret);
-      return NULL;
+      return nullptr;
     }
   }
 
@@ -256,7 +254,7 @@ static AVFrame *__alloc_video_frame(enum AVPixelFormat pix_fmt, int width, int h
 
   picture = av_frame_alloc();
   if (!picture) {
-    return NULL;
+    return nullptr;
   }
 
   picture->format = pix_fmt;
@@ -266,9 +264,107 @@ static AVFrame *__alloc_video_frame(enum AVPixelFormat pix_fmt, int width, int h
   ret = av_frame_get_buffer(picture, 32);
   if (ret < 0) {
     FFMPEG_FAILED_LOG("av_frame_get_buffer", ret);
-    return NULL;
+    return nullptr;
   }
   return picture;
 }
+
+class OpenTimeoutHook {
+  public:
+    OpenTimeoutHook(const std::string &url) : url_(url) {}
+
+    void call_me_before_open(AVFormatContext *fmt_ctx, uint64_t timeout_msec) {
+      timeout_msec_ = timeout_msec;
+      open_tick_msec_ = chef::stuff_op::tick_msec();
+      fmt_ctx->interrupt_callback.callback = OpenTimeoutHook::interrupt_cb;
+      fmt_ctx->interrupt_callback.opaque = (void *)this;
+    }
+    void call_me_after_open() {
+      opened_ = true;
+    }
+
+  private:
+    static int interrupt_cb(void *opaque) {
+      OpenTimeoutHook *obj = (OpenTimeoutHook *)opaque;
+      if (!obj->opened_ && obj->open_tick_msec_ != 0 && obj->timeout_msec_ != 0 &&
+          (chef::stuff_op::tick_msec() - obj->open_tick_msec_ > obj->timeout_msec_)
+      ) {
+        AVKID_LOG_INFO << "Timeout. " << obj->url_ << "\n";
+        return 1;
+      }
+      return 0;
+    }
+
+  private:
+    std::string url_;
+    uint64_t open_tick_msec_ = 0;
+    uint64_t timeout_msec_ = 0;
+    bool opened_ = false;
+};
+
+static int __open_fmt_ctx_with_timtout(AVFormatContext **fmt_ctx, const std::string &url, uint32_t timeout_msec) {
+  int iret = -1;
+  *fmt_ctx = avformat_alloc_context();
+  // @TODO timeout
+  //OpenTimeoutHook oth(url);
+  //oth.call_me_before_open(*fmt_ctx, timeout_msec);
+  if ((iret = avformat_open_input(fmt_ctx, url.c_str(), nullptr, nullptr)) < 0) {
+    // @NOTICE 错误值举例
+    // -875574520, AVERROR_HTTP_NOT_FOUND, Server returned 404 Not Found, rtmp流不存在
+    // -2, , No such file or directory, 文件不存在
+    // -1414092869, , Immediate exit requested, 被interrupt_cb干掉了
+    return iret;
+  }
+  //oth.call_me_after_open();
+  return iret;
+}
+
+static int __open_codec_context(int *stream_idx /*out*/,
+                              AVCodecContext **dec_ctx /*out*/,
+                              AVFormatContext *fmt_ctx,
+                              enum AVMediaType type,
+                              bool refcount=false)
+{
+  int ret, stream_index;
+  AVStream *st;
+  AVCodec *dec = nullptr;
+  AVDictionary *opts = nullptr;
+
+  if ((ret = av_find_best_stream(fmt_ctx, type, -1, -1, nullptr, 0)) < 0) {
+    FFMPEG_FAILED_LOG("av_find_best_stream", ret);
+    return ret;
+  }
+
+  stream_index = ret;
+  st = fmt_ctx->streams[stream_index];
+
+  // 28 AV_CODEC_ID_H264
+  // 86018 AV_CODEC_ID_AAC
+  dec = avcodec_find_decoder(st->codecpar->codec_id);
+  if (!dec) {
+    return AVERROR(EINVAL);
+  }
+
+  *dec_ctx = avcodec_alloc_context3(dec);
+  if (!*dec_ctx) {
+    return AVERROR(ENOMEM);
+  }
+
+  if ((ret = avcodec_parameters_to_context(*dec_ctx, st->codecpar)) < 0) {
+    FFMPEG_FAILED_LOG("avcodec_parameters_to_context", ret);
+    return ret;
+  }
+
+  // av_dict_set(&opts, "refcounted_frames", refcount ? "1" : "0", 0);
+  if ((ret = avcodec_open2(*dec_ctx, dec, &opts)) < 0) {
+    FFMPEG_FAILED_LOG("avcodec_open2", ret);
+    return ret;
+  }
+
+  *stream_idx = stream_index;
+
+  return 0;
+}
+
 
 }; // namespace avkid

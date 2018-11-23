@@ -17,7 +17,13 @@ namespace avkid {
 
 class Out : public InObserver {
   public:
-    Out();
+    enum InputType {
+      INPUT_TYPE_AV_PACKET,
+      INPUT_TYPE_AV_FRAME
+    };
+
+  public:
+    Out(InputType it);
     ~Out();
 
     void init_video(AVPixelFormat pix_fmt,
@@ -36,7 +42,8 @@ class Out : public InObserver {
 
     bool open(const std::string &url, uint64_t timeout_ms=0);
 
-    void async_encode_frame(AVFrame *av_frame, bool is_audio);
+    void async_do_packet(AVPacket *av_packet, bool is_audio);
+    void async_do_frame(AVFrame *av_frame, bool is_audio);
 
   public:
     void write_packet(AVPacket *av_packet, bool is_audio);
@@ -60,6 +67,11 @@ class Out : public InObserver {
     static int interrupt_cb(void *opaque);
 
   private:
+    Out(const Out &);
+    Out &operator=(const Out &);
+
+  private:
+    InputType input_type_;
     std::string url_;
     uint64_t open_ms_ = 0;
     uint64_t timeout_ms_ = 0;
@@ -89,7 +101,6 @@ class Out : public InObserver {
 
     int64_t         video_base_pts_ = -1;
     int64_t         video_next_pts_ = 0;
-    //AVFrame        *video_frame_ = NULL;
 
     AVSampleFormat audio_sample_fmt_ = AV_SAMPLE_FMT_NONE;
     int audio_bit_rate_        = 0;
@@ -97,7 +108,6 @@ class Out : public InObserver {
     int audio_channel_layout_  = 0;
 
     int audio_samples_count = 0;
-    //AVFrame *audio_frame_= NULL;
 
     chef::task_thread *thread_ = NULL;
 

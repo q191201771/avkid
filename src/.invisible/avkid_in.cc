@@ -5,8 +5,8 @@
 
 namespace avkid {
 
-static int __open_codec_context(int *stream_idx,
-                              AVCodecContext **dec_ctx,
+static int __open_codec_context(int *stream_idx /*out*/,
+                              AVCodecContext **dec_ctx /*out*/,
                               AVFormatContext *fmt_ctx,
                               enum AVMediaType type,
                               bool refcount=false)
@@ -160,16 +160,14 @@ bool In::read() {
   AVFrame *frame = av_frame_alloc();
   RETURN_FALSE_IF_NULL(frame, "av_frame_alloc");
 
-  AVPacket pkt;
-  av_init_packet(&pkt);
-  pkt.data = NULL;
-  pkt.size = 0;
-
-  int got_frame = 0;
+  AVPacket pkt = {0};
 
   while(!stop_flag_ && av_read_frame(fmt_ctx_, &pkt) >= 0) {
-    if (observer_) {
-      observer_->packet_cb(&pkt, pkt.stream_index == audio_stream_index_);
+    if (observer_) { observer_->packet_cb(&pkt, pkt.stream_index == audio_stream_index_); }
+
+    if (!should_decode_) {
+      av_packet_unref(&pkt);
+      continue;
     }
 
     // 分析AVPacket
@@ -229,12 +227,16 @@ bool In::read() {
     // printf(">>>>>\n");
 
     // AVPacket -> AVFrame
-
+    uint8_t nal_unit_type = *(pkt.data + 4) & CHEF_H264_NAL_UNIT_TYPE_MASK;
+    if (nal_unit_type == CHEF_H264_NAL_UNIT_TYPE_SEI) {
+      av_packet_unref(&pkt);
+      continue;
+    }
     iret = avcodec_send_packet(pkt.stream_index == audio_stream_index_ ? audio_dec_ctx_ : video_dec_ctx_, &pkt);
     if (iret < 0) {
       FFMPEG_FAILED_LOG("avcodec_send_packet", iret);
+      av_packet_unref(&pkt);
       continue;
-      //break;
     }
     while (iret >= 0) {
       iret = avcodec_receive_frame(pkt.stream_index == audio_stream_index_ ? audio_dec_ctx_ : video_dec_ctx_, frame);
@@ -244,6 +246,11 @@ bool In::read() {
         }
         break;
       }
+
+      //AVKID_LOG_DEBUG << "CHEFERASEME " << frame->pkt_size << " " << frame->linesize[0] << " " << frame->linesize[1] << " " << frame->linesize[2]
+      //  << " " << frame->linesize[3] << " " << frame->linesize[4] << " " << frame->linesize[5]
+      //  << " " << frame->linesize[6] << " " << frame->linesize[7]
+      //  << " "<< (pkt.stream_index == audio_stream_index_ ? "audio" : "video") << "\n";
 
       if (observer_) {
         observer_->frame_cb(frame, pkt.stream_index == audio_stream_index_);
