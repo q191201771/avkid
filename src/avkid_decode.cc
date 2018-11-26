@@ -21,11 +21,11 @@ bool Decode::open(AVFormatContext *in_fmt_ctx) {
   int iret = -1;
   int audio_stream_index = -1;
   int video_stream_index = -1;
-  if ((iret = __open_codec_context(&audio_stream_index, &audio_dec_ctx_, in_fmt_ctx, AVMEDIA_TYPE_AUDIO)) < 0) {
+  if ((iret = __open_codec_context(&audio_stream_index, &audio_dec_ctx_, in_fmt_ctx, AVMEDIA_TYPE_AUDIO, true)) < 0) {
     AVKID_LOG_FFMPEG_ERROR(iret);
     return false;
   }
-  if ((iret = __open_codec_context(&video_stream_index, &video_dec_ctx_, in_fmt_ctx, AVMEDIA_TYPE_VIDEO)) < 0) {
+  if ((iret = __open_codec_context(&video_stream_index, &video_dec_ctx_, in_fmt_ctx, AVMEDIA_TYPE_VIDEO, true)) < 0) {
     AVKID_LOG_FFMPEG_ERROR(iret);
     return false;
   }

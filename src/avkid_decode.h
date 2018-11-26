@@ -7,7 +7,6 @@
 #pragma once
 
 #include "avkid_common.hpp"
-#include "avkid_input.h"
 #include "chef_task_thread.hpp"
 
 namespace avkid {
