@@ -48,6 +48,7 @@ namespace avkid {
 // #define CHEF_SPS_PROFILE_IDC_PROFILE_MAIN     0x77
 // #define CHEF_SPS_PROFILE_IDC_PROFILE_EXTENDED 0x88
 
+
 class PacketHandler {
   public:
     virtual ~PacketHandler() {}
@@ -74,9 +75,16 @@ static void global_deinit_ffmpeg() {
   avformat_network_deinit();
 }
 
+static const std::string av_make_error_string(int errnum) {
+  char buf[AV_ERROR_MAX_STRING_SIZE] = {0};
+  av_strerror(errnum, buf, AV_ERROR_MAX_STRING_SIZE);
+  return std::string(buf);
+}
+
 static std::string stringify_ffmpeg_error(int err) {
   std::ostringstream ss;
-  ss << "(" << err << ":" << av_err2str(err) << ")";
+  //ss << "(" << err << ":" << av_err2str(err) << ")";
+  ss << "(" << err << ":" << av_ake_error_string(err) << ")";
   return ss.str();
 }
 
