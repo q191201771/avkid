@@ -84,7 +84,7 @@ static const std::string av_make_error_string(int errnum) {
 static std::string stringify_ffmpeg_error(int err) {
   std::ostringstream ss;
   //ss << "(" << err << ":" << av_err2str(err) << ")";
-  ss << "(" << err << ":" << av_ake_error_string(err) << ")";
+  ss << "(" << err << ":" << av_make_error_string(err) << ")";
   return ss.str();
 }
 
