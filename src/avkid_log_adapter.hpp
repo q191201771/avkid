@@ -16,6 +16,9 @@
 
 #define AVKID_LOG_FFMPEG_ERROR(iret) AVKID_LOG_ERROR << stringify_ffmpeg_error(iret) << "\n";
 
+#define AVKID_LOG_PACKET(packet, is_audio) if (packet) AVKID_LOG_DEBUG << "Packet " << (is_audio ? "A" : "V") << " pts:" << (packet)->pts << " dts:" << (packet)->dts << " duration:" << (packet)->duration << " size:" << (packet)->size << "\n";
+#define AVKID_LOG_FRAME(frame, is_audio)   if (frame) AVKID_LOG_DEBUG << "Frame " << (is_audio ? "A" : "V") << " pts:" << (frame)->pts << " dts:" << (frame)->pkt_dts << " duration:" << (frame)->pkt_duration << " kframe:" << (frame)->key_frame << "\n";
+
 #define FFMPEG_FAILED_LOG(funcname, ret) AVKID_LOG_ERROR << funcname << " failed. " << stringify_ffmpeg_error(ret) << "\n";
 
 #define RETURN_FALSE_IF_NULL(x, funcname) if (!x) { AVKID_LOG_ERROR << funcname << "failed.\n"; return false; }

@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
   global_init_ffmpeg();
 
   Output *output = new Output(false);
-  Encode *encode = new Encode(output);
+  Encode *encode = new Encode(output, false);
   Decode *decode = new Decode(encode, false);
   Input *input = new Input(decode);
   if (!input->open(in)) {
@@ -34,18 +34,18 @@ int main(int argc, char **argv) {
   encode->open(input->in_fmt_ctx());
   output->open(out, input->in_fmt_ctx());
 
-  std::thread thd([input, duration] {
-      sleep(duration);
-      input->stop_read();
-  });
-  thd.detach();
+  //std::thread thd([input, duration] {
+  //    sleep(duration);
+  //    input->stop_read();
+  //});
+  //thd.detach();
 
-  input->read();
+  input->read(duration * 1000);
 
-  delete output;
+  delete input;
   delete decode;
   delete encode;
-  delete input;
+  delete output;
 
   return 0;
 }

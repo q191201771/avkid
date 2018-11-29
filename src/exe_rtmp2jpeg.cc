@@ -5,22 +5,18 @@
 
 using namespace avkid;
 
-Input *g_input = nullptr;
-Decode *g_decode = nullptr;
-
 std::string g_in_url;
 int g_jpeg_total;
 int g_width;
 int g_height;
 bool g_decode_async_mode;
 
-int g_jpeg_count = 0;
-
 std::string jpeg_filename() {
-  if (g_jpeg_count++ == g_jpeg_total) { exit(0); }
+  static int jpeg_count = 0;
+  if (jpeg_count++ == g_jpeg_total) { exit(0); }
 
   char buf[128] = {0};
-  snprintf(buf, 127, "./resource/out_rtmp2jpeg_%llu_%d.jpeg", chef::stuff_op::unix_timestamp_msec(), g_jpeg_count);
+  snprintf(buf, 127, "./resource/out_rtmp2jpeg_%llu_%d.jpeg", chef::stuff_op::unix_timestamp_msec(), jpeg_count);
   return std::string(buf);
 }
 
@@ -41,17 +37,20 @@ class DecodeObServerImpl : public FrameHandler {
 
 int main(int argc, char **argv) {
   if (argc < 4) {
-    AVKID_LOG_ERROR << "Usage: " << argv[0] << " <rtmp url> <width:default 0> <height:default 0> <num of jpeg> <decode async mode>\n";
+    std::cerr << "Usage: " << argv[0] << " <rtmp url> <width:set 0 to copy> <height:set 0 to copy> <num of jpeg> <decode async mode>\n";
     return -1;
   }
-
-  global_init_ffmpeg();
 
   g_in_url = argv[1];
   g_jpeg_total = atoi(argv[2]);
   g_width = atoi(argv[3]);
   g_height = atoi(argv[4]);
   g_decode_async_mode = atoi(argv[5]);
+
+  global_init_ffmpeg();
+
+  Input *g_input = nullptr;
+  Decode *g_decode = nullptr;
 
   DecodeObServerImpl *doi = new DecodeObServerImpl();
   g_decode = new Decode(doi, g_decode_async_mode);

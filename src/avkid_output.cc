@@ -12,6 +12,7 @@ Output::Output(bool async_mode)
 }
 
 Output::~Output() {
+  thread_.reset();
   if (out_fmt_ctx_) {
     av_write_trailer(out_fmt_ctx_);
     if (out_fmt_ctx_ && !(out_fmt_ctx_->oformat->flags & AVFMT_NOFILE))
@@ -68,6 +69,9 @@ bool Output::open(const std::string &url, AVFormatContext *in_fmt_ctx) {
 
 bool Output::do_packet_(AVPacket *pkt, bool is_audio) {
   int iret = -1;
+
+  pkt->stream_index = is_audio ? audio_stream_index_ : video_stream_index_;
+
   if ((iret = av_interleaved_write_frame(out_fmt_ctx_, pkt)) < 0) {
     AVKID_LOG_FFMPEG_ERROR(iret);
     return false;

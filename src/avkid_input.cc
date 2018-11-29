@@ -27,20 +27,48 @@ END:
   return iret >= 0;
 }
 
-bool Input::read() {
+bool Input::read(uint32_t duration_ms) {
   int iret = -1;
 
   AVPacket pkt = {0};
 
   while (!stop_read_flag_ && av_read_frame(in_fmt_ctx_, &pkt) >= 0) {
+    int ct = in_fmt_ctx_->streams[pkt.stream_index]->codecpar->codec_type;
+
+    if (ct == AVMEDIA_TYPE_AUDIO) {
+      if (first_audio_pts_ == -1) { first_audio_pts_ = pkt.pts; }
+      if (first_audio_dts_ == -1) { first_audio_dts_ = pkt.dts; }
+
+      audio_duration_ = pkt.pts - first_audio_pts_;
+      pkt.pts -= first_audio_pts_;
+      pkt.dts -= first_audio_dts_;
+    } else {
+      if (first_video_pts_ == -1) { first_video_pts_ = pkt.pts; }
+      if (first_video_dts_ == -1) { first_video_dts_ = pkt.dts; }
+
+      video_duration_ = pkt.pts - first_video_pts_;
+      pkt.pts -= first_video_pts_;
+      pkt.dts -= first_video_dts_;
+    }
+
+    if (duration_ms != 0 && audio_duration_ > duration_ms && video_duration_ > duration_ms) {
+      stop_read_flag_ = true;
+    }
+
     if (ph_) {
-      int ct = in_fmt_ctx_->streams[pkt.stream_index]->codecpar->codec_type;
       if (ct != AVMEDIA_TYPE_AUDIO && ct != AVMEDIA_TYPE_VIDEO) {
         AVKID_LOG_ERROR << "Unknown codec type:" << ct << "\n";
         continue;
       }
       ph_->packet_cb(&pkt, ct == AVMEDIA_TYPE_AUDIO);
     }
+
+    //if (ct == AVMEDIA_TYPE_VIDEO) {
+    //  uint8_t nal_unit_type = *(pkt.data + 4) & 0x1f;
+    //  if (nal_unit_type == 5) {
+    //    AVKID_LOG_DEBUG << "IDR\n";
+    //  }
+    //}
 
     av_packet_unref(&pkt);
   }

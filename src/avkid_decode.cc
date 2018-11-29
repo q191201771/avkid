@@ -13,6 +13,9 @@ Decode::Decode(FrameHandler *fh, bool async_mode)
 }
 
 Decode::~Decode() {
+  do_packet(nullptr, true);
+  do_packet(nullptr, false);
+  thread_.reset();
   avcodec_free_context(&audio_dec_ctx_);
   avcodec_free_context(&video_dec_ctx_);
 }
@@ -38,36 +41,43 @@ bool Decode::do_packet_(AVPacket *pkt, bool is_audio) {
 
   int iret = -1;
   AVCodecContext *dec_ctx = is_audio ? audio_dec_ctx_ : video_dec_ctx_;
+
+  //AVKID_LOG_PACKET(pkt, is_audio);
+
   if ((iret = avcodec_send_packet(dec_ctx, pkt)) < 0) {
     AVKID_LOG_FFMPEG_ERROR(iret);
     goto END;
   }
 
-  if ((iret = avcodec_receive_frame(dec_ctx, frame)) < 0) {
-    AVKID_LOG_FFMPEG_ERROR(iret);
-    goto END;
+  while (iret >= 0) {
+    iret = avcodec_receive_frame(dec_ctx, frame);
+    if (iret == AVERROR(EAGAIN) || iret == AVERROR_EOF) {
+      iret = 0;
+      goto END;
+    } else if (iret < 0) {
+      AVKID_LOG_FFMPEG_ERROR(iret);
+      goto END;
+    }
+
+    //AVKID_LOG_FRAME(frame, is_audio);
+    if (fh_) { fh_->frame_cb(frame, is_audio); }
   }
 
-  if (fh_) { fh_->frame_cb(frame, is_audio); }
-
 END:
-  av_packet_unref(pkt);
+  if (pkt) { av_packet_unref(pkt); }
+
   av_frame_unref(frame);
 
   return (iret != -1);
 }
 bool Decode::do_packet(AVPacket *pkt, bool is_audio) {
-  AVPacket *rpkt = av_packet_clone(pkt);
+  AVPacket *rpkt = pkt ? av_packet_clone(pkt) : pkt;
   if (async_mode_) {
     thread_->add(chef::bind(&Decode::do_packet_, this, rpkt, is_audio));
     return true;
   }
 
   return do_packet_(rpkt, is_audio);
-}
-
-void Decode::packet_cb(AVPacket *pkt, bool is_audio) {
-  do_packet(pkt, is_audio);
 }
 
 }

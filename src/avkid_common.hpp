@@ -362,14 +362,14 @@ static int __open_fmt_ctx_with_timtout(AVFormatContext **fmt_ctx, const std::str
 
 // TODO rename param
 static int __open_codec_context(int *stream_idx /*out*/,
-                              AVCodecContext **dec_ctx /*out*/,
+                              AVCodecContext **codec_ctx /*out*/,
                               AVFormatContext *fmt_ctx,
                               enum AVMediaType type,
                               bool is_decode)
 {
   int ret, stream_index;
   AVStream *st;
-  AVCodec *dec = nullptr;
+  AVCodec *codec = nullptr;
   AVDictionary *opts = nullptr;
 
   if ((ret = av_find_best_stream(fmt_ctx, type, -1, -1, nullptr, 0)) < 0) {
@@ -383,27 +383,30 @@ static int __open_codec_context(int *stream_idx /*out*/,
   // 28 AV_CODEC_ID_H264
   // 86018 AV_CODEC_ID_AAC
   if (is_decode) {
-    dec = avcodec_find_decoder(st->codecpar->codec_id);
+    codec = avcodec_find_decoder(st->codecpar->codec_id);
   } else {
-    dec = avcodec_find_encoder(st->codecpar->codec_id);
+    codec = avcodec_find_encoder(st->codecpar->codec_id);
   }
 
-  if (!dec) {
+  if (!codec) {
     return AVERROR(EINVAL);
   }
 
-  *dec_ctx = avcodec_alloc_context3(dec);
-  if (!*dec_ctx) {
+  *codec_ctx = avcodec_alloc_context3(codec);
+  if (!*codec_ctx) {
     return AVERROR(ENOMEM);
   }
 
-  if ((ret = avcodec_parameters_to_context(*dec_ctx, st->codecpar)) < 0) {
+  if ((ret = avcodec_parameters_to_context(*codec_ctx, st->codecpar)) < 0) {
     FFMPEG_FAILED_LOG("avcodec_parameters_to_context", ret);
     return ret;
   }
 
-  if ((ret = avcodec_open2(*dec_ctx, dec, &opts)) < 0) {
-    AVKID_LOG_DEBUG << "extradata_size:" << (*dec_ctx)->extradata_size << "\n";
+  if (!is_decode) {
+    (*codec_ctx)->time_base = st->time_base;
+  }
+
+  if ((ret = avcodec_open2(*codec_ctx, codec, &opts)) < 0) {
     FFMPEG_FAILED_LOG("avcodec_open2", ret);
     return ret;
   }

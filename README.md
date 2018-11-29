@@ -12,7 +12,7 @@ TODO
 
 ```
 /src/exe_rtmp2jpeg.cc
-input: 拉取http-flv格式流（其他格式待测试）
+input: http-flv | flv文件（其他格式待测试）
 output: 对视频中的I帧存储为本地jpeg图片文件
 
 * 支持截图n张后停止
@@ -23,14 +23,19 @@ output: 对视频中的I帧存储为本地jpeg图片文件
 
 ```
 /src/exe_rtmpdump.cc
-input: 拉取http-flv格式流（其他格式待测试）
+input: http-flv | flv文件（其他格式待测试）
 output: 存储为本地flv格式文件（其他格式待测试）
 
 * 支持录制固定时长后停止
 
 TODO
 * 支持只录制音频或视频
-* 支持同步、异步解码
+```
+
+### 3. http-flv解码再编码后录制
+
+```
+/src/exe_rtmp_decode_encode.cc
 ```
 
 ## 未使用avkid的程序（和音视频相关，临时先放这）

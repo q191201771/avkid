@@ -21,7 +21,7 @@ class Decode : public PacketHandler {
     bool do_packet(AVPacket *pkt, bool is_audio);
 
   public: // PacketHandler
-    virtual void packet_cb(AVPacket *pkt, bool is_audio);
+    virtual void packet_cb(AVPacket *pkt, bool is_audio) { do_packet(pkt, is_audio); }
 
   private:
     bool do_packet_(AVPacket *pkt, bool is_audio);
