@@ -1,6 +1,28 @@
 #include "avkid_filter.h"
+#include "avkid.hpp"
 
 namespace avkid {
+
+Filter::Filter(bool async_mode)
+  : async_mode_(async_mode)
+{
+  if (async_mode) {
+    thread_ = std::make_shared<chef::task_thread>("avkid_decode", chef::task_thread::RELEASE_MODE_DO_ALL_DONE);
+    thread_->start();
+  }
+}
+
+Filter::~Filter() {
+  do_frame(nullptr, true);
+  do_frame(nullptr, false);
+  thread_.reset();
+  // TODO free ffmpeg resource
+}
+
+
+void Filter::set_frame_handler(FrameHandlerT fh) {
+  fh_ = fh;
+}
 
 bool Filter::open(AVFormatContext *in_fmt_ctx) {
   int iret = -1;
@@ -95,6 +117,16 @@ bool Filter::open(AVFormatContext *in_fmt_ctx) {
 }
 
 void Filter::do_frame(AVFrame *frame, bool is_audio) {
+  AVFrame *rframe = frame ? av_frame_clone(frame) : frame;
+  if (async_mode_) {
+    thread_->add(chef::bind(&Filter::do_frame_, this, rframe, is_audio));
+    return;
+  }
+
+  do_frame_(rframe, is_audio);
+}
+
+void Filter::do_frame_(AVFrame *frame, bool is_audio) {
   int iret = -1;
 
   if (is_audio) {

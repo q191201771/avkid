@@ -6,15 +6,16 @@
 
 #pragma once
 
-#include "avkid_common.hpp"
-#include "chef_task_thread.hpp"
+#include "avkid_fwd.hpp"
 
 namespace avkid {
 
 class Decode {
   public:
-    Decode(FrameHandlerT fh, bool async_mode);
+    Decode(bool async_mode=false);
     ~Decode();
+
+    void set_frame_handler(FrameHandlerT fh);
 
     bool open(AVFormatContext *in_fmt_ctx);
 

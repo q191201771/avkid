@@ -10,31 +10,12 @@
 #include <assert.h>
 #include <cinttypes>
 #include <sstream>
+#include "avkid_fwd.hpp"
 #include "avkid_log_adapter.hpp"
-
-#ifndef __STDC_FORMAT_MACROS
-#define __STDC_FORMAT_MACROS
-#endif
-#ifndef __STDC_CONSTANT_MACROS
-#define __STDC_CONSTANT_MACROS
-#endif
-
-extern "C" {
-  #include <libavformat/avformat.h>
-  #include <libavcodec/avcodec.h>
-  //#include <libavutil/avutil.h>
-  #include <libavutil/samplefmt.h>
-  #include <libavutil/timestamp.h>
-  #include <libavutil/imgutils.h>
-  #include <libavutil/opt.h>
-  #include <libavfilter/avfilter.h>
-  #include <libavfilter/buffersink.h>
-  #include <libavfilter/buffersrc.h>
-  #include <libswscale/swscale.h>
-}
 
 namespace avkid {
 
+// TODO
 #define CHEF_H264_NAL_UNIT_TYPE_MASK      0x1F
 #define CHEF_H264_NAL_UNIT_TYPE_SLICE     1
 #define CHEF_H264_NAL_UNIT_TYPE_IDR_SLICE 5
@@ -42,33 +23,13 @@ namespace avkid {
 #define CHEF_H264_NAL_UNIT_TYPE_SPS       7
 #define CHEF_H264_NAL_UNIT_TYPE_PPS       8
 #define CHEF_H264_NAL_UNIT_TYPE_AUD       9
-//H264_NAL_DPA             = 2,
-//H264_NAL_DPB             = 3,
-//H264_NAL_DPC             = 4,
-//H264_NAL_END_SEQUENCE    = 10,
-//H264_NAL_END_STREAM      = 11,
-//H264_NAL_FILLER_DATA     = 12,
-//H264_NAL_SPS_EXT         = 13,
-//H264_NAL_AUXILIARY_SLICE = 19,
 
-// #define CHEF_SPS_PROFILE_IDC_PROFILE_BASELINE 0x66
-// #define CHEF_SPS_PROFILE_IDC_PROFILE_MAIN     0x77
-// #define CHEF_SPS_PROFILE_IDC_PROFILE_EXTENDED 0x88
-
-typedef std::function<void(AVPacket *, bool)> PacketHandlerT;
-typedef std::function<void(AVFrame *, bool)> FrameHandlerT;
-
-//class PacketHandler {
-//  public:
-//    virtual ~PacketHandler() {}
-//    virtual void packet_cb(AVPacket *pkt, bool is_audio) = 0;
-//};
-//
-//class FrameHandler {
-//  public:
-//    virtual ~FrameHandler() {}
-//    virtual void frame_cb(AVFrame *frame, bool is_audio) = 0;
-//};
+#define AVKID_BIND_INPUT_TO_DECODE(input, decode) input->set_packet_handler(std::bind(&Decode::do_packet, decode, std::placeholders::_1, std::placeholders::_2));
+#define AVKID_BIND_INPUT_TO_OUTPUT(input, output) input->set_packet_handler(std::bind(&Output::do_packet, output, std::placeholders::_1, std::placeholders::_2));
+#define AVKID_BIND_ENCODE_TO_OUTPUT(encode, output) encode->set_packet_handler(std::bind(&Output::do_packet, output, std::placeholders::_1, std::placeholders::_2));
+#define AVKID_BIND_DECODE_TO_FILTER(decode, filter) decode->set_frame_handler(std::bind(&Filter::do_frame, filter, std::placeholders::_1, std::placeholders::_2));
+#define AVKID_BIND_DECODE_TO_ENCODE(decode, encode) decode->set_frame_handler(std::bind(&Encode::do_frame, encode, std::placeholders::_1, std::placeholders::_2));
+#define AVKID_BIND_FILTER_TO_ENCODE(filter, encode) filter->set_frame_handler(std::bind(&Encode::do_frame, encode, std::placeholders::_1, std::placeholders::_2));
 
 static void global_init_ffmpeg() {
   av_log_set_level(AV_LOG_DEBUG);

@@ -1,4 +1,5 @@
 #include "avkid_output.h"
+#include "avkid.hpp"
 
 namespace avkid {
 

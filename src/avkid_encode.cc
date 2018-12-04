@@ -1,10 +1,10 @@
 #include "avkid_encode.h"
+#include "avkid.hpp"
 
 namespace avkid {
 
-Encode::Encode(PacketHandlerT ph, bool async_mode)
-  : ph_(ph)
-  , async_mode_(async_mode)
+Encode::Encode(bool async_mode)
+  : async_mode_(async_mode)
 {
   if (async_mode) {
     thread_ = std::make_shared<chef::task_thread>("avkid_encode", chef::task_thread::RELEASE_MODE_DO_ALL_DONE);
@@ -16,6 +16,10 @@ Encode::~Encode() {
   do_frame(nullptr, true);
   do_frame(nullptr, false);
   thread_.reset();
+}
+
+void Encode::set_packet_handler(PacketHandlerT ph) {
+  ph_ = ph;
 }
 
 bool Encode::open(AVFormatContext *in_fmt_ctx) {

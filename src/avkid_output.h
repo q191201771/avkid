@@ -6,14 +6,13 @@
 
 #pragma once
 
-#include "avkid_common.hpp"
-#include "chef_task_thread.hpp"
+#include "avkid_fwd.hpp"
 
 namespace avkid {
 
 class Output {
   public:
-    Output(bool async_mode);
+    Output(bool async_mode=false);
     ~Output();
 
     // TODO timeout

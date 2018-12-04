@@ -1,12 +1,6 @@
 #include <stdio.h>
 #include <thread>
-#include "avkid_common.hpp"
-#include "avkid_input.h"
-#include "avkid_decode.h"
-#include "avkid_filter.h"
-#include "avkid_encode.h"
-#include "avkid_output.h"
-
+#include "avkid.hpp"
 
 using namespace avkid;
 
@@ -23,8 +17,9 @@ int main(int argc, char **argv) {
 
   global_init_ffmpeg();
 
-  Decode *left_decode = new Decode(nullptr, false);
-  Input *left_input = new Input(std::bind(&Decode::do_packet, left_decode, std::placeholders::_1, std::placeholders::_2));
+  DecodePtr left_decode = std::make_shared<Decode>();
+  InputPtr left_input = std::make_shared<Input>();
+  AVKID_BIND_INPUT_TO_DECODE(left_input, left_decode);
   if (!left_input->open(left)) {
     AVKID_LOG_ERROR << "Open " << left << " failed.\n";
     return -1;
@@ -32,9 +27,6 @@ int main(int argc, char **argv) {
   left_decode->open(left_input->in_fmt_ctx());
 
   left_input->read(duration * 1000);
-
-  delete left_input;
-  delete left_decode;
 
   return 0;
 }

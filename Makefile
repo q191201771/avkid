@@ -3,7 +3,7 @@ CXXFLAGS = -g -O0 -std=c++11 -pipe -fPIC -D__STDC_FORMAT_MACROS -D__STDC_CONSTAN
 
 LINKFLAGS = -lavformat -lavcodec -lavutil -lavfilter -lswscale -lfdk-aac
 
-all: rtmp2jpeg rtmpdump rtmp_decode_encode mix tag_nalus tail
+all: rtmp2jpeg rtmpdump rtmp_decode_encode mix tag_nalus
 
 COMMON_HEADER = $(wildcard src/*.h)
 COMMON_HEADER += $(wildcard src/*.hpp)
@@ -35,6 +35,7 @@ tail:
 	rm -rf rtmp2jpeg.dSYM | date | ls -l rtmp2jpeg
 	rm -rf rtmpdump.dSYM | date | ls -l rtmpdump
 	rm -rf rtmp_decode_encode.dSYM | date | ls -l rtmp_decode_encode
+	rm -rf mix.dSYM | date | ls -l mix
 	rm -rf tag_nalus.dSYM | date | ls -l tag_nalus
 
 clean:

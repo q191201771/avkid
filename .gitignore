@@ -3,6 +3,7 @@
 *.log
 *.mp4
 *.flv
+*.jpeg
 
 /FFmpeg
 /resource

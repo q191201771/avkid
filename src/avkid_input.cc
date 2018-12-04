@@ -1,9 +1,14 @@
 #include "avkid_input.h"
+#include "avkid.hpp"
 
 namespace avkid {
 
 Input::~Input() {
   avformat_close_input(&in_fmt_ctx_);
+}
+
+void Input::set_packet_handler(PacketHandlerT ph) {
+  ph_ = ph;
 }
 
 bool Input::open(const std::string &url, uint32_t timeout_msec) {

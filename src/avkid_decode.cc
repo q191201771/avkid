@@ -1,10 +1,10 @@
 #include "avkid_decode.h"
+#include "avkid.hpp"
 
 namespace avkid {
 
-Decode::Decode(FrameHandlerT fh, bool async_mode)
-  : fh_(fh)
-  , async_mode_(async_mode)
+Decode::Decode(bool async_mode)
+  : async_mode_(async_mode)
 {
   if (async_mode) {
     thread_ = std::make_shared<chef::task_thread>("avkid_decode", chef::task_thread::RELEASE_MODE_DO_ALL_DONE);
@@ -18,6 +18,10 @@ Decode::~Decode() {
   thread_.reset();
   avcodec_free_context(&audio_dec_ctx_);
   avcodec_free_context(&video_dec_ctx_);
+}
+
+void Decode::set_frame_handler(FrameHandlerT fh) {
+  fh_ = fh;
 }
 
 bool Decode::open(AVFormatContext *in_fmt_ctx) {

@@ -6,15 +6,16 @@
 
 #pragma once
 
-#include "avkid_common.hpp"
-#include "chef_task_thread.hpp"
+#include "avkid_fwd.hpp"
 
 namespace avkid {
 
 class Encode {
   public:
-    Encode(PacketHandlerT ph, bool async_mode);
+    Encode(bool async_mode=false);
     ~Encode();
+
+    void set_packet_handler(PacketHandlerT ph);
 
     bool open(AVFormatContext *in_fmt_ctx);
 
