@@ -11,23 +11,20 @@
 
 namespace avkid {
 
-class Decode : public PacketHandler {
+class Decode {
   public:
-    Decode(FrameHandler *fh, bool async_mode);
+    Decode(FrameHandlerT fh, bool async_mode);
     ~Decode();
 
     bool open(AVFormatContext *in_fmt_ctx);
 
     bool do_packet(AVPacket *pkt, bool is_audio);
 
-  public: // PacketHandler
-    virtual void packet_cb(AVPacket *pkt, bool is_audio) { do_packet(pkt, is_audio); }
-
   private:
     bool do_packet_(AVPacket *pkt, bool is_audio);
 
   private:
-    FrameHandler *fh_ = nullptr;
+    FrameHandlerT fh_;
     bool async_mode_ = false;
     std::shared_ptr<chef::task_thread> thread_;
 

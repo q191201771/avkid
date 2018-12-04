@@ -13,7 +13,7 @@ namespace avkid {
 
 class Input {
   public:
-    Input(PacketHandler *ph) : ph_(ph) {}
+    Input(PacketHandlerT ph) : ph_(ph) {}
     ~Input();
 
     bool open(const std::string &url, uint32_t timeout_msec=0);
@@ -25,8 +25,11 @@ class Input {
   public:
     CHEF_PROPERTY_WITH_INIT_VALUE(AVFormatContext *, in_fmt_ctx, nullptr);
 
+    CHEF_PROPERTY_WITH_INIT_VALUE(int, video_width, -1);
+    CHEF_PROPERTY_WITH_INIT_VALUE(int, video_height, -1);
+
   private:
-    PacketHandler *ph_ = nullptr;
+    PacketHandlerT ph_;
     std::string url_;
     bool stop_read_flag_ = false;
     int64_t first_audio_pts_ = -1;

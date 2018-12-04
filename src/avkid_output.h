@@ -11,7 +11,7 @@
 
 namespace avkid {
 
-class Output : public PacketHandler {
+class Output {
   public:
     Output(bool async_mode);
     ~Output();
@@ -20,9 +20,6 @@ class Output : public PacketHandler {
     bool open(const std::string &url, AVFormatContext *in_fmt_ctx);
 
     bool do_packet(AVPacket *pkt, bool is_audio);
-
-  public: // PacketHandler
-    virtual void packet_cb(AVPacket *pkt, bool is_audio);
 
   private:
     bool do_packet_(AVPacket *pkt, bool is_audio);

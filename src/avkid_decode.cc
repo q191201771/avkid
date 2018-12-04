@@ -2,7 +2,7 @@
 
 namespace avkid {
 
-Decode::Decode(FrameHandler *fh, bool async_mode)
+Decode::Decode(FrameHandlerT fh, bool async_mode)
   : fh_(fh)
   , async_mode_(async_mode)
 {
@@ -60,7 +60,7 @@ bool Decode::do_packet_(AVPacket *pkt, bool is_audio) {
     }
 
     //AVKID_LOG_FRAME(frame, is_audio);
-    if (fh_) { fh_->frame_cb(frame, is_audio); }
+    if (fh_) { fh_(frame, is_audio); }
   }
 
 END:

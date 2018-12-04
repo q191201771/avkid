@@ -2,7 +2,7 @@
 
 namespace avkid {
 
-Encode::Encode(PacketHandler *ph, bool async_mode)
+Encode::Encode(PacketHandlerT ph, bool async_mode)
   : ph_(ph)
   , async_mode_(async_mode)
 {
@@ -75,7 +75,7 @@ void Encode::do_audio_frame(AVFrame *frame) {
     }
 
     AVKID_LOG_PACKET(&packet, true);
-    if (ph_) { ph_->packet_cb(&packet, true); }
+    if (ph_) { ph_(&packet, true); }
   }
 }
 
@@ -99,7 +99,7 @@ void Encode::do_video_frame(AVFrame *frame) {
     }
 
     AVKID_LOG_PACKET(&packet, false);
-    if (ph_) { ph_->packet_cb(&packet, false); }
+    if (ph_) { ph_(&packet, false); }
   }
 }
 

@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
   global_init_ffmpeg();
 
   Output *output = new Output(output_async_mode);
-  Input *input = new Input(output);
+  Input *input = new Input(std::bind(&Output::do_packet, output, std::placeholders::_1, std::placeholders::_2));
   if (!input->open(in)) {
     AVKID_LOG_ERROR << "Open " << in << " failed.\n";
     return -1;

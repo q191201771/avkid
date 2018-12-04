@@ -97,8 +97,4 @@ bool Output::do_packet(AVPacket *pkt, bool is_audio) {
   return do_packet_(rpkt, is_audio);
 }
 
-void Output::packet_cb(AVPacket *pkt, bool is_audio) {
-  do_packet(pkt, is_audio);
-}
-
 }

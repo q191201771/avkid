@@ -22,10 +22,14 @@
 extern "C" {
   #include <libavformat/avformat.h>
   #include <libavcodec/avcodec.h>
+  //#include <libavutil/avutil.h>
   #include <libavutil/samplefmt.h>
   #include <libavutil/timestamp.h>
   #include <libavutil/imgutils.h>
+  #include <libavutil/opt.h>
   #include <libavfilter/avfilter.h>
+  #include <libavfilter/buffersink.h>
+  #include <libavfilter/buffersrc.h>
   #include <libswscale/swscale.h>
 }
 
@@ -51,27 +55,27 @@ namespace avkid {
 // #define CHEF_SPS_PROFILE_IDC_PROFILE_MAIN     0x77
 // #define CHEF_SPS_PROFILE_IDC_PROFILE_EXTENDED 0x88
 
+typedef std::function<void(AVPacket *, bool)> PacketHandlerT;
+typedef std::function<void(AVFrame *, bool)> FrameHandlerT;
 
-class PacketHandler {
-  public:
-    virtual ~PacketHandler() {}
-    virtual void packet_cb(AVPacket *pkt, bool is_audio) = 0;
-};
-
-class FrameHandler {
-  public:
-    virtual ~FrameHandler() {}
-    virtual void frame_cb(AVFrame *frame, bool is_audio) = 0;
-};
+//class PacketHandler {
+//  public:
+//    virtual ~PacketHandler() {}
+//    virtual void packet_cb(AVPacket *pkt, bool is_audio) = 0;
+//};
+//
+//class FrameHandler {
+//  public:
+//    virtual ~FrameHandler() {}
+//    virtual void frame_cb(AVFrame *frame, bool is_audio) = 0;
+//};
 
 static void global_init_ffmpeg() {
   av_log_set_level(AV_LOG_DEBUG);
 
-  // for lavf
   av_register_all();
-  // for lavf
   avformat_network_init();
-  // avfilter_register_all();
+  avfilter_register_all();
 }
 
 static void global_deinit_ffmpeg() {

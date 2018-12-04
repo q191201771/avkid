@@ -20,10 +20,19 @@ bool Input::open(const std::string &url, uint32_t timeout_msec) {
 
   av_dump_format(in_fmt_ctx_, 0, url.c_str(), 0);
 
-END:
-  if (iret < 0) {
-    AVKID_LOG_ERROR << stringify_ffmpeg_error(iret) << "\n";
+  for (int i = 0; i < in_fmt_ctx_->nb_streams; i++) {
+    AVStream *stream = in_fmt_ctx_->streams[i];
+    AVCodecParameters *codecpar = stream->codecpar;
+
+    if (codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+      video_width_ = codecpar->width;
+      video_height_ = codecpar->height;
+    }
   }
+
+END:
+  if (iret < 0) { AVKID_LOG_FFMPEG_ERROR(iret); }
+
   return iret >= 0;
 }
 
@@ -60,7 +69,7 @@ bool Input::read(uint32_t duration_ms) {
         AVKID_LOG_ERROR << "Unknown codec type:" << ct << "\n";
         continue;
       }
-      ph_->packet_cb(&pkt, ct == AVMEDIA_TYPE_AUDIO);
+      ph_(&pkt, ct == AVMEDIA_TYPE_AUDIO);
     }
 
     //if (ct == AVMEDIA_TYPE_VIDEO) {

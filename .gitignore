@@ -14,5 +14,6 @@
 /rtmpdump
 /rtmp_decode_encode
 /tag_nalus
+/mix
 /diff.sh
 /tmp

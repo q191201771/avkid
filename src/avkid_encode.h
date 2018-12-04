@@ -11,35 +11,32 @@
 
 namespace avkid {
 
-  class Encode : public FrameHandler {
-    public:
-      Encode(PacketHandler *ph, bool async_mode);
-      ~Encode();
+class Encode {
+  public:
+    Encode(PacketHandlerT ph, bool async_mode);
+    ~Encode();
 
-      bool open(AVFormatContext *in_fmt_ctx);
+    bool open(AVFormatContext *in_fmt_ctx);
 
-      bool do_frame(AVFrame *frame, bool is_audio);
+    bool do_frame(AVFrame *frame, bool is_audio);
 
-    public: // FrameHandler
-      virtual void frame_cb(AVFrame *frame, bool is_audio) { do_frame(frame, is_audio); }
+  private:
+    bool do_frame_(AVFrame *frame, bool is_audio);
+    void do_audio_frame(AVFrame *frame);
+    void do_video_frame(AVFrame *frame);
 
-    private:
-      bool do_frame_(AVFrame *frame, bool is_audio);
-      void do_audio_frame(AVFrame *frame);
-      void do_video_frame(AVFrame *frame);
+  private:
+    PacketHandlerT ph_;
+    bool async_mode_ = false;
+    std::shared_ptr<chef::task_thread> thread_;
 
-    private:
-      PacketHandler *ph_ = nullptr;
-      bool async_mode_ = false;
-      std::shared_ptr<chef::task_thread> thread_;
+    AVCodecContext *audio_enc_ctx_ = nullptr;
+    AVCodecContext *video_enc_ctx_ = nullptr;
 
-      AVCodecContext *audio_enc_ctx_ = nullptr;
-      AVCodecContext *video_enc_ctx_ = nullptr;
+  private:
+    Encode(const Encode &) = delete;
+    Encode &operator=(const Encode &) = delete;
 
-    private:
-      Encode(const Encode &) = delete;
-      Encode &operator=(const Encode &) = delete;
-
-  };
+};
 
 }
