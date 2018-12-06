@@ -32,6 +32,7 @@ extern "C" {
 #include "chef_snippet.hpp"
 #include "chef_task_thread.hpp"
 
+
 namespace avkid {
   typedef std::function<void(AVPacket *, bool)> PacketHandlerT;
   typedef std::function<void(AVFrame *, bool)> FrameHandlerT;
@@ -50,6 +51,14 @@ namespace avkid {
   typedef std::shared_ptr<Filter> FilterPtr;
   typedef std::shared_ptr<Encode> EncodePtr;
   typedef std::shared_ptr<Output> OutputPtr;
+
+  #define AVKID_H264_NAL_UNIT_TYPE_MASK      0x1F
+  #define AVKID_H264_NAL_UNIT_TYPE_SLICE     0x01
+  #define AVKID_H264_NAL_UNIT_TYPE_IDR_SLICE 0x05
+  #define AVKID_H264_NAL_UNIT_TYPE_SEI       0x06
+  #define AVKID_H264_NAL_UNIT_TYPE_SPS       0x07
+  #define AVKID_H264_NAL_UNIT_TYPE_PPS       0x08
+  #define AVKID_H264_NAL_UNIT_TYPE_AUD       0x09
+
 }
 
-#include "avkid_combine.h"

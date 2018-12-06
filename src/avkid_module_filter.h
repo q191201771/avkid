@@ -7,10 +7,11 @@
 #pragma once
 
 #include "avkid_fwd.hpp"
+#include "avkid_module_base.h"
 
 namespace avkid {
 
-class Filter : public FrameProducer {
+class Filter : public ModuleBase, public FrameProducer {
   public:
     Filter(bool async_mode=false);
     ~Filter();
@@ -24,9 +25,6 @@ class Filter : public FrameProducer {
     void do_frame_(AVFrame *frame, bool is_audio);
 
   private:
-    bool async_mode_ = false;
-    std::shared_ptr<chef::task_thread> thread_;
-
     AVFilterContext *buffersrc_ctx_ = nullptr;
     AVFilterContext *buffersink_ctx_ = nullptr;
 

@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -g -O0 -std=c++11 -pipe -fPIC -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS # -Wall
+CXXFLAGS = -g -O2 -std=c++11 -pipe -fPIC -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS # -Wall
 
 LINKFLAGS = -lavformat -lavcodec -lavutil -lavfilter -lswscale -lfdk-aac
 
@@ -8,7 +8,8 @@ all: rtmp2jpeg rtmpdump rtmp_decode_encode mix tag_nalus
 COMMON_HEADER = $(wildcard src/*.h)
 COMMON_HEADER += $(wildcard src/*.hpp)
 
-COMMON_SRC = src/avkid_module_input.cc src/avkid_module_decode.cc src/avkid_module_filter.cc src/avkid_module_encode.cc src/avkid_module_output.cc src/avkid_mix.cc src/avkid_combine.cc src/avkid_help_op.cc
+COMMON_SRC = src/avkid_module_base.cc src/avkid_module_input.cc src/avkid_module_decode.cc src/avkid_module_filter.cc \
+						 src/avkid_module_encode.cc src/avkid_module_output.cc src/avkid_mix.cc src/avkid_combine.cc src/avkid_help_op.cc
 
 RTMP_2_JPEG_SRC = src/exe_rtmp2jpeg.cc $(COMMON_SRC)
 RTMPDUMP_SRC = src/exe_rtmpdump.cc $(COMMON_SRC)

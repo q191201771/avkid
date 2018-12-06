@@ -13,9 +13,10 @@ Input::~Input() {
   avformat_close_input(&in_fmt_ctx_);
 }
 
-bool Input::open(const std::string &url, uint32_t timeout_msec) {
+bool Input::open(const std::string &url, uint32_t timeout_msec, enum audio_video_flag avf) {
   int iret = -1;
   url_ = url;
+  avf_ = avf;
 
   if ((iret = HelpOP::open_fmt_ctx_with_timtout(&in_fmt_ctx_, url, timeout_msec)) < 0) {
     goto END;
@@ -72,22 +73,16 @@ bool Input::read(uint32_t duration_ms) {
     }
 
     if (ph_) {
-      if (ct != AVMEDIA_TYPE_AUDIO && ct != AVMEDIA_TYPE_VIDEO) {
+      if (ct == AVMEDIA_TYPE_AUDIO) {
+        if (avf_audio_on()) { ph_(&pkt, true); }
+      } else if (ct == AVMEDIA_TYPE_VIDEO) {
+        if (avf_video_on()) { ph_(&pkt, false); }
+      } else {
         AVKID_LOG_ERROR << "Unknown codec type:" << ct << "\n";
-        HelpOP::unshare_packet(&pkt);
-        continue;
       }
-      ph_(&pkt, ct == AVMEDIA_TYPE_AUDIO);
     }
 
-    //if (ct == AVMEDIA_TYPE_VIDEO) {
-    //  uint8_t nal_unit_type = *(pkt.data + 4) & 0x1f;
-    //  if (nal_unit_type == 5) {
-    //    AVKID_LOG_DEBUG << "IDR\n";
-    //  }
-    //}
-
-    HelpOP::unshare_packet(&pkt);
+    HelpOP::packet_unref_buf(&pkt);
   }
 
   return true;

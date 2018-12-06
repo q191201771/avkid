@@ -20,20 +20,4 @@ EncodePtr combine(DecodePtr in, EncodePtr out);
 OutputPtr combine(EncodePtr in, OutputPtr out);
 EncodePtr combine(FilterPtr in, EncodePtr out);
 
-class PacketProducer {
-  public:
-    void set_data_handler(PacketHandlerT ph);
-
-  protected:
-    PacketHandlerT ph_;
-};
-
-class FrameProducer {
-  public:
-    void set_data_handler(FrameHandlerT fh);
-
-  protected:
-    FrameHandlerT fh_;
-};
-
 }

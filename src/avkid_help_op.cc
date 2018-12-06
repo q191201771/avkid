@@ -342,19 +342,35 @@ int HelpOP::open_codec_context(int *stream_idx /*out*/,
   return 0;
 }
 
-AVFrame *HelpOP::share_frame(AVFrame *frame) {
+AVFrame *HelpOP::frame_alloc_prop() {
+  return av_frame_alloc();
+}
+
+void HelpOP::frame_alloc_buf(AVFrame *frame, bool is_audio) {
+  if (frame) { av_frame_get_buffer(frame, is_audio ? 0 : 32); }
+}
+
+AVFrame *HelpOP::frame_alloc_prop_ref_buf(AVFrame *frame) {
   return frame ? av_frame_clone(frame) : nullptr;
 }
 
-AVPacket *HelpOP::share_packet(AVPacket *packet) {
+AVPacket *HelpOP::packet_alloc_prop_ref_buf(AVPacket *packet) {
   return packet ? av_packet_clone(packet) : nullptr;
 }
 
-void HelpOP::unshare_frame(AVFrame *frame) {
+void HelpOP::frame_free_prop_unref_buf(AVFrame **frame) {
+  if (frame && *frame) { av_frame_free(frame); }
+}
+
+void HelpOP::packet_free_prop_unref_buf(AVPacket **packet) {
+  if (packet && *packet) { av_packet_free(packet); }
+}
+
+void HelpOP::frame_unref_buf(AVFrame *frame) {
   if (frame) { av_frame_unref(frame); }
 }
 
-void HelpOP::unshare_packet(AVPacket *packet) {
+void HelpOP::packet_unref_buf(AVPacket *packet) {
   if (packet) { av_packet_unref(packet); }
 }
 

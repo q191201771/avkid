@@ -10,14 +10,6 @@
 
 namespace avkid {
 
-#define AVKID_H264_NAL_UNIT_TYPE_MASK      0x1F
-#define AVKID_H264_NAL_UNIT_TYPE_SLICE     0x01
-#define AVKID_H264_NAL_UNIT_TYPE_IDR_SLICE 0x05
-#define AVKID_H264_NAL_UNIT_TYPE_SEI       0x06
-#define AVKID_H264_NAL_UNIT_TYPE_SPS       0x07
-#define AVKID_H264_NAL_UNIT_TYPE_PPS       0x08
-#define AVKID_H264_NAL_UNIT_TYPE_AUD       0x09
-
 class HelpOP {
   public:
     static void global_init_ffmpeg();
@@ -54,10 +46,15 @@ class HelpOP {
                                   int width=-1,
                                   int height=-1);
 
-    static AVFrame *share_frame(AVFrame *frame);
-    static AVPacket *share_packet(AVPacket *packet);
-    static void unshare_frame(AVFrame *frame);
-    static void unshare_packet(AVPacket *packet);
+    static AVFrame *frame_alloc_prop();
+    static void frame_alloc_buf(AVFrame *frame, bool is_audio);
+    static AVFrame *frame_alloc_prop_ref_buf(AVFrame *frame);
+    static void frame_free_prop_unref_buf(AVFrame **frame);
+    static void frame_unref_buf(AVFrame *frame);
+
+    static AVPacket *packet_alloc_prop_ref_buf(AVPacket *packet);
+    static void packet_free_prop_unref_buf(AVPacket **packet);
+    static void packet_unref_buf(AVPacket *packet);
 };
 
 }

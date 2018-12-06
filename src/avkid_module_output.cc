@@ -8,12 +8,8 @@ std::shared_ptr<Output> Output::create(bool async_mode) {
 }
 
 Output::Output(bool async_mode)
-  : async_mode_(async_mode)
+  : ModuleBase(async_mode)
 {
-  if (async_mode) {
-    thread_ = std::make_shared<chef::task_thread>("avkid_ouput", chef::task_thread::RELEASE_MODE_DO_ALL_DONE);
-    thread_->start();
-  }
 }
 
 Output::~Output() {
@@ -89,7 +85,7 @@ bool Output::do_packet_(AVPacket *pkt, bool is_audio) {
     return false;
   }
 
-  HelpOP::unshare_packet(pkt);
+  HelpOP::packet_free_prop_unref_buf(&pkt);
   return true;
 }
 
@@ -100,7 +96,7 @@ bool Output::do_data(AVPacket *pkt, bool is_audio) {
     return false;
   }
 
-  AVPacket *rpkt = HelpOP::share_packet(pkt);
+  AVPacket *rpkt = HelpOP::packet_alloc_prop_ref_buf(pkt);
   if (async_mode_) {
     thread_->add(chef::bind(&Output::do_packet_, this, rpkt, is_audio));
     return true;

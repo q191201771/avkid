@@ -8,12 +8,8 @@ std::shared_ptr<Filter> Filter::create(bool async_mode) {
 }
 
 Filter::Filter(bool async_mode)
-  : async_mode_(async_mode)
+  : ModuleBase(async_mode)
 {
-  if (async_mode) {
-    thread_ = std::make_shared<chef::task_thread>("avkid_decode", chef::task_thread::RELEASE_MODE_DO_ALL_DONE);
-    thread_->start();
-  }
 }
 
 Filter::~Filter() {
@@ -116,7 +112,7 @@ bool Filter::open(AVFormatContext *in_fmt_ctx) {
 }
 
 void Filter::do_data(AVFrame *frame, bool is_audio) {
-  AVFrame *rframe = HelpOP::share_frame(frame);
+  AVFrame *rframe = HelpOP::frame_alloc_prop_ref_buf(frame);
   if (async_mode_) {
     thread_->add(chef::bind(&Filter::do_frame_, this, rframe, is_audio));
     return;
@@ -131,18 +127,17 @@ void Filter::do_frame_(AVFrame *frame, bool is_audio) {
   if (is_audio) {
     if (fh_) { fh_(frame, is_audio); }
 
-    HelpOP::unshare_frame(frame);
+    HelpOP::frame_free_prop_unref_buf(&frame);
     return;
   }
 
-  AVFrame *filt_frame = av_frame_alloc();
-
+  AVFrame *filt_frame = HelpOP::frame_alloc_prop();
 
   //frame->pts = frame->best_effort_timestamp;
 
   if ((iret = av_buffersrc_add_frame_flags(buffersrc_ctx_, frame, AV_BUFFERSRC_FLAG_KEEP_REF)) < 0) {
     AVKID_LOG_FFMPEG_ERROR(iret);
-    HelpOP::unshare_frame(frame);
+    HelpOP::frame_free_prop_unref_buf(&frame);
     return;
   }
 
@@ -157,10 +152,10 @@ void Filter::do_frame_(AVFrame *frame, bool is_audio) {
 
     if (fh_) { fh_(filt_frame, is_audio); }
 
-    HelpOP::unshare_frame(filt_frame);
+    HelpOP::frame_free_prop_unref_buf(&filt_frame);
   }
-  HelpOP::unshare_frame(filt_frame);
-  HelpOP::unshare_frame(frame);
+  HelpOP::frame_free_prop_unref_buf(&filt_frame);
+  HelpOP::frame_free_prop_unref_buf(&frame);
 }
 
 }

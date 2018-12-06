@@ -8,12 +8,8 @@ std::shared_ptr<Encode> Encode::create(bool async_mode) {
 }
 
 Encode::Encode(bool async_mode)
-  : async_mode_(async_mode)
+  : ModuleBase(async_mode)
 {
-  if (async_mode) {
-    thread_ = std::make_shared<chef::task_thread>("avkid_encode", chef::task_thread::RELEASE_MODE_DO_ALL_DONE);
-    thread_->start();
-  }
 }
 
 Encode::~Encode() {
@@ -39,7 +35,7 @@ bool Encode::open(AVFormatContext *in_fmt_ctx, int width, int height) {
 }
 
 bool Encode::do_data(AVFrame *frame, bool is_audio) {
-  AVFrame *rframe = HelpOP::share_frame(frame);
+  AVFrame *rframe = HelpOP::frame_alloc_prop_ref_buf(frame);
   if (async_mode_) {
     thread_->add(chef::bind(&Encode::do_frame_, this, rframe, is_audio));
     return true;
@@ -53,7 +49,7 @@ bool Encode::do_frame_(AVFrame *frame, bool is_audio) {
   } else {
     do_video_frame(frame);
   }
-  HelpOP::unshare_frame(frame);
+  HelpOP::frame_free_prop_unref_buf(&frame);
   // TODO
   return true;
 }

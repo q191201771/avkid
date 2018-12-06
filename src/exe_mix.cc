@@ -17,15 +17,15 @@ class MixManager {
       }
 
       if (right_frame_deque_.empty()) {
-        AVFrame *rframe = HelpOP::share_frame(frame);
+        AVFrame *rframe = HelpOP::frame_alloc_prop_ref_buf(frame);
         left_frame_deque_.push_back(rframe);
       } else {
         AVFrame *pair_frame = right_frame_deque_.front();
         right_frame_deque_.pop_front();
         AVFrame *dst = Mix::horizontal(frame, pair_frame);
         encode->do_data(dst, is_audio);
-        HelpOP::unshare_frame(pair_frame);
-        HelpOP::unshare_frame(dst);
+        HelpOP::frame_free_prop_unref_buf(&pair_frame);
+        HelpOP::frame_free_prop_unref_buf(&dst);
       }
     }
 
@@ -35,15 +35,15 @@ class MixManager {
       }
 
       if (left_frame_deque_.empty()) {
-        AVFrame *rframe = HelpOP::share_frame(frame);
+        AVFrame *rframe = HelpOP::frame_alloc_prop_ref_buf(frame);
         right_frame_deque_.push_back(rframe);
       } else {
         AVFrame *pair_frame = left_frame_deque_.front();
         left_frame_deque_.pop_front();
         AVFrame *dst = Mix::horizontal(pair_frame, frame);
         encode->do_data(dst, is_audio);
-        HelpOP::unshare_frame(pair_frame);
-        HelpOP::unshare_frame(dst);
+        HelpOP::frame_free_prop_unref_buf(&pair_frame);
+        HelpOP::frame_free_prop_unref_buf(&dst);
       }
     }
 

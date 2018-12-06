@@ -7,17 +7,18 @@
 #pragma once
 
 #include "avkid_fwd.hpp"
+#include "avkid_module_base.h"
 
 namespace avkid {
 
-class Input : public PacketProducer {
+class Input : public ModuleBase, public PacketProducer {
   public:
     Input();
     ~Input();
     static std::shared_ptr<Input> create();
 
     // TODO timeout
-    bool open(const std::string &url, uint32_t timeout_msec=0);
+    bool open(const std::string &url, uint32_t timeout_msec=0, enum audio_video_flag avf=avf_both);
 
     bool read(uint32_t duration_ms=0);
 

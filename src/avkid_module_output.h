@@ -7,10 +7,11 @@
 #pragma once
 
 #include "avkid_fwd.hpp"
+#include "avkid_module_base.h"
 
 namespace avkid {
 
-class Output {
+class Output : public ModuleBase {
   public:
     Output(bool async_mode=false);
     ~Output();
@@ -25,11 +26,9 @@ class Output {
     bool do_packet_(AVPacket *pkt, bool is_audio);
 
   private:
-    bool async_mode_ = false;
     AVFormatContext *out_fmt_ctx_ = nullptr;
     int audio_stream_index_ = -1;
     int video_stream_index_ = -1;
-    std::shared_ptr<chef::task_thread> thread_;
 
   private:
     Output(const Output &) = delete;

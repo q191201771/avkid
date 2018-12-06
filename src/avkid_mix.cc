@@ -9,13 +9,13 @@ AVFrame *Mix::horizontal(AVFrame *left, AVFrame *right) {
   int dst_width = left->width * 2;
   int dst_height = left->height;
 
-  AVFrame *dst = av_frame_alloc();
+  AVFrame *dst = HelpOP::frame_alloc_prop();
   dst->format = AV_PIX_FMT_YUV420P;
   dst->width = dst_width;
   dst->height = dst_height;
   dst->pts = left->pts; // TODO
   dst->pkt_dts = left->pkt_dts;
-  av_frame_get_buffer(dst, 32);
+  HelpOP::frame_alloc_buf(dst, false);
 
   memset(dst->data[0], 0, dst_width * dst_height);
   memset(dst->data[1], 0, dst_width * dst_height / 4);

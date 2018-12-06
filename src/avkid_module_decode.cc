@@ -8,12 +8,8 @@ std::shared_ptr<Decode> Decode::create(bool async_mode) {
 }
 
 Decode::Decode(bool async_mode)
-  : async_mode_(async_mode)
+  : ModuleBase(async_mode)
 {
-  if (async_mode) {
-    thread_ = std::make_shared<chef::task_thread>("avkid_decode", chef::task_thread::RELEASE_MODE_DO_ALL_DONE);
-    thread_->start();
-  }
 }
 
 Decode::~Decode() {
@@ -41,7 +37,7 @@ bool Decode::open(AVFormatContext *in_fmt_ctx) {
 }
 
 bool Decode::do_packet_(AVPacket *pkt, bool is_audio) {
-  AVFrame *frame = av_frame_alloc();
+  AVFrame *frame = HelpOP::frame_alloc_prop();
 
   int iret = -1;
   AVCodecContext *dec_ctx = is_audio ? audio_dec_ctx_ : video_dec_ctx_;
@@ -68,13 +64,13 @@ bool Decode::do_packet_(AVPacket *pkt, bool is_audio) {
   }
 
 END:
-  HelpOP::unshare_packet(pkt);
-  HelpOP::unshare_frame(frame);
+  HelpOP::packet_free_prop_unref_buf(&pkt);
+  HelpOP::frame_free_prop_unref_buf(&frame);
 
   return (iret != -1);
 }
 bool Decode::do_data(AVPacket *pkt, bool is_audio) {
-  AVPacket *rpkt = HelpOP::share_packet(pkt);
+  AVPacket *rpkt = HelpOP::packet_alloc_prop_ref_buf(pkt);
   if (async_mode_) {
     thread_->add(chef::bind(&Decode::do_packet_, this, rpkt, is_audio));
     return true;

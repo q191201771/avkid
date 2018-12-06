@@ -33,13 +33,5 @@ EncodePtr combine(FilterPtr in, EncodePtr out) {
   return out;
 }
 
-void PacketProducer::set_data_handler(PacketHandlerT ph) {
-  ph_ = ph;
-}
-
-void FrameProducer::set_data_handler(FrameHandlerT fh) {
-  fh_ = fh;
-}
-
 }
 
