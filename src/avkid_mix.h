@@ -6,12 +6,14 @@
 
 #pragma once
 
-#include "avkid_common.hpp"
+#include "avkid_fwd.hpp"
 
 namespace avkid {
 
 class Mix {
-  AVFrame *horizontal(AVFrame *left, AVFrame *right);
+  public:
+    // 水平合并，要求左右两幅图的宽高相等，合并后高不变，宽为二倍
+    static AVFrame *horizontal(AVFrame *left, AVFrame *right);
 };
 
 }

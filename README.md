@@ -2,7 +2,8 @@
 
 学习ffmpeg，做一些音视频方便的事，后面会写文档介绍avkid中各模块的功能划分以及如何组合工作~
 
-录制，截图，视频缩放
+目前的包含的功能：对直播流进行录制，截图，视频缩放，视频合流，视频转黑白，视频上下翻转，左右翻转等
+
 
 ## 核心模块
 
@@ -10,46 +11,7 @@ TODO
 
 ## 使用avkid的示范
 
-### 1. http-flv截图
-
-```
-/src/exe_rtmp2jpeg.cc
-input: http-flv | flv文件（其他格式待测试）
-output: 对视频中的I帧存储为本地jpeg图片文件
-
-* 支持截图n张后停止
-* 支持缩放（指定截图后宽高）
-```
-
-### 2. http-flv录制
-
-```
-/src/exe_rtmpdump.cc
-input: http-flv | flv文件（其他格式待测试）
-output: 存储为本地flv格式文件（其他格式待测试）
-
-* 支持录制固定时长后停止
-
 TODO
-* 支持只录制音频或视频
-```
-
-### 3. http-flv视频处理后录制
-
-```
-/src/exe_rtmp_decode_encode.cc
-
-可对视频进行上下翻转、左右翻转、转成黑白视频等处理后再录制成文件
-```
-
-## 未使用avkid的程序（和音视频相关，临时先放这）
-
-### 1. 分析flv文件中的nalu包
-
-```
-/src/exe_tag_nalus.cc
-分析flv文件中的video tag中的nalu包的情况
-```
 
 ## 我的环境
 

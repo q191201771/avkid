@@ -1,5 +1,5 @@
 /**
- * @file   avkid_input.h
+ * @file   avkid_module_input.h
  * @author chef
  *
  */
@@ -10,12 +10,11 @@
 
 namespace avkid {
 
-class Input {
+class Input : public PacketProducer {
   public:
-    Input() {}
+    Input();
     ~Input();
-
-    void set_packet_handler(PacketHandlerT ph);
+    static std::shared_ptr<Input> create();
 
     // TODO timeout
     bool open(const std::string &url, uint32_t timeout_msec=0);
@@ -31,7 +30,6 @@ class Input {
     CHEF_PROPERTY_WITH_INIT_VALUE(int, video_height, -1);
 
   private:
-    PacketHandlerT ph_;
     std::string url_;
     bool stop_read_flag_ = false;
 

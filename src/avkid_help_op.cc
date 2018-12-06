@@ -1,37 +1,9 @@
-/**
- * @file   avkid_common.hpp
- * @author chef
- *
- */
-
-#pragma once
-
-#include <arpa/inet.h>
-#include <assert.h>
-#include <cinttypes>
-#include <sstream>
-#include "avkid_fwd.hpp"
-#include "avkid_log_adapter.hpp"
+#include "avkid_help_op.h"
+#include "avkid.hpp"
 
 namespace avkid {
 
-// TODO
-#define CHEF_H264_NAL_UNIT_TYPE_MASK      0x1F
-#define CHEF_H264_NAL_UNIT_TYPE_SLICE     1
-#define CHEF_H264_NAL_UNIT_TYPE_IDR_SLICE 5
-#define CHEF_H264_NAL_UNIT_TYPE_SEI       6
-#define CHEF_H264_NAL_UNIT_TYPE_SPS       7
-#define CHEF_H264_NAL_UNIT_TYPE_PPS       8
-#define CHEF_H264_NAL_UNIT_TYPE_AUD       9
-
-#define AVKID_BIND_INPUT_TO_DECODE(input, decode) input->set_packet_handler(std::bind(&Decode::do_packet, decode, std::placeholders::_1, std::placeholders::_2));
-#define AVKID_BIND_INPUT_TO_OUTPUT(input, output) input->set_packet_handler(std::bind(&Output::do_packet, output, std::placeholders::_1, std::placeholders::_2));
-#define AVKID_BIND_ENCODE_TO_OUTPUT(encode, output) encode->set_packet_handler(std::bind(&Output::do_packet, output, std::placeholders::_1, std::placeholders::_2));
-#define AVKID_BIND_DECODE_TO_FILTER(decode, filter) decode->set_frame_handler(std::bind(&Filter::do_frame, filter, std::placeholders::_1, std::placeholders::_2));
-#define AVKID_BIND_DECODE_TO_ENCODE(decode, encode) decode->set_frame_handler(std::bind(&Encode::do_frame, encode, std::placeholders::_1, std::placeholders::_2));
-#define AVKID_BIND_FILTER_TO_ENCODE(filter, encode) filter->set_frame_handler(std::bind(&Encode::do_frame, encode, std::placeholders::_1, std::placeholders::_2));
-
-static void global_init_ffmpeg() {
+void HelpOP::global_init_ffmpeg() {
   av_log_set_level(AV_LOG_DEBUG);
 
   av_register_all();
@@ -39,30 +11,29 @@ static void global_init_ffmpeg() {
   avfilter_register_all();
 }
 
-static void global_deinit_ffmpeg() {
+void HelpOP::global_deinit_ffmpeg() {
   avformat_network_deinit();
 }
 
-static const std::string av_make_error_string(int errnum) {
+std::string HelpOP::av_make_error_string(int errnum) {
   char buf[AV_ERROR_MAX_STRING_SIZE] = {0};
   av_strerror(errnum, buf, AV_ERROR_MAX_STRING_SIZE);
   return std::string(buf);
 }
 
-static std::string stringify_ffmpeg_error(int err) {
+std::string HelpOP::stringify_ffmpeg_error(int err) {
   std::ostringstream ss;
   //ss << "(" << err << ":" << av_err2str(err) << ")";
   ss << "(" << err << ":" << av_make_error_string(err) << ")";
   return ss.str();
 }
 
-// 传出参数 sps_len sps_data pps_len pps_data
-static void deserialize_from_extradata(uint8_t *extradata,
+void HelpOP::deserialize_from_extradata(uint8_t *extradata,
                                        int extradata_size,
-                                       unsigned short *sps_len,
-                                       uint8_t **sps_data,
-                                       unsigned short *pps_len,
-                                       uint8_t **pps_data)
+                                       unsigned short *sps_len /*out*/,
+                                       uint8_t **sps_data /*out*/,
+                                       unsigned short *pps_len /*out*/,
+                                       uint8_t **pps_data /*out*/)
 {
     *sps_len  = ntohs(*(unsigned short *)(extradata + 6));
     *sps_data = extradata + 6 + sizeof(*sps_len);
@@ -70,13 +41,12 @@ static void deserialize_from_extradata(uint8_t *extradata,
     *pps_data = extradata + 6 + sizeof(*sps_len) + *sps_len + 1 + sizeof(*pps_len);
 }
 
-// 传出参数 extradata extradata_size @NOTICE 空间由外部申请
-static void serialize_to_extradata(unsigned short sps_len,
+void HelpOP::serialize_to_extradata(unsigned short sps_len,
                                    uint8_t *sps_data,
                                    unsigned short pps_len,
                                    uint8_t *pps_data,
-                                   uint8_t *extradata,
-                                   int *extradata_size)
+                                   uint8_t *extradata /*out*/,
+                                   int *extradata_size /*out*/)
 {
   int i = 0;
   uint8_t *p = extradata;
@@ -101,7 +71,7 @@ static void serialize_to_extradata(unsigned short sps_len,
   *extradata_size = i;
 }
 
-static AVFrame *scale_video_frame(AVFrame *frame, int width, int height) {
+AVFrame *HelpOP::scale_video_frame(AVFrame *frame, int width, int height) {
   int iret = -1;
   AVFrame *dst_frame = av_frame_alloc();
   dst_frame->width = width;
@@ -126,7 +96,7 @@ static AVFrame *scale_video_frame(AVFrame *frame, int width, int height) {
   return dst_frame;
 }
 
-static bool dump_mjpeg(AVFrame *frame, const std::string &filename) {
+bool HelpOP::dump_mjpeg(AVFrame *frame, const std::string &filename) {
   int ret;
   bool bret = false;
 
@@ -229,50 +199,33 @@ END:
   return bret;
 }
 
-static AVFrame *__alloc_audio_frame(enum AVSampleFormat sample_fmt, uint64_t channel_layout, int sample_rate, int nb_samples) {
-  AVFrame *frame = av_frame_alloc();
-  int ret;
-
-  if (!frame) {
-    AVKID_LOG_INFO << "Func alloc_audio_frame failed.\n";
-    return nullptr;
+bool HelpOP::mix_video_pin_frame(AVFrame *bg, AVFrame *part, int x, int y) {
+  int bgw = bg->width;
+  int bgh = bg->height;
+  int ptw = part->width;
+  int pth = part->height;
+  if (x < 0 || y < 0 || (x+ptw) > bgw || (y+pth) > bgh) {
+    AVKID_LOG_ERROR << "\n";
+    return false;
   }
 
-  frame->format = sample_fmt;
-  frame->channel_layout = channel_layout;
-  frame->sample_rate = sample_rate;
-  frame->nb_samples = nb_samples;
-
-  if (nb_samples) {
-    ret = av_frame_get_buffer(frame, 0);
-    if (ret < 0) {
-      FFMPEG_FAILED_LOG("av_frame_get_buffer", ret);
-      return nullptr;
-    }
+  for (int i = 0; i < pth; i++) {
+    memcpy(bg->data[0] + bg->linesize[0]*(y+i) + x,
+           part->data[0] + part->linesize[0]*i,
+           ptw);
   }
 
-  return frame;
-}
+  for (int i = 0; i < pth/2; i++) {
+    memcpy(bg->data[1] + bg->linesize[1]*(y/2+i) + x/2,
+           part->data[1] + part->linesize[1]*i,
+           ptw/2);
 
-static AVFrame *__alloc_video_frame(enum AVPixelFormat pix_fmt, int width, int height) {
-  AVFrame *picture;
-  int ret;
-
-  picture = av_frame_alloc();
-  if (!picture) {
-    return nullptr;
+    memcpy(bg->data[2] + bg->linesize[2]*(y/2+i) + x/2,
+           part->data[2] + part->linesize[2]*i,
+           ptw/2);
   }
 
-  picture->format = pix_fmt;
-  picture->width = width;
-  picture->height = height;
-
-  ret = av_frame_get_buffer(picture, 32);
-  if (ret < 0) {
-    FFMPEG_FAILED_LOG("av_frame_get_buffer", ret);
-    return nullptr;
-  }
-  return picture;
+  return true;
 }
 
 class OpenTimeoutHook {
@@ -308,7 +261,7 @@ class OpenTimeoutHook {
     bool opened_ = false;
 };
 
-static int __open_fmt_ctx_with_timtout(AVFormatContext **fmt_ctx, const std::string &url, uint32_t timeout_msec) {
+int HelpOP::open_fmt_ctx_with_timtout(AVFormatContext **fmt_ctx, const std::string &url, uint32_t timeout_msec) {
   int iret = -1;
   *fmt_ctx = avformat_alloc_context();
   // @TODO timeout
@@ -325,12 +278,13 @@ static int __open_fmt_ctx_with_timtout(AVFormatContext **fmt_ctx, const std::str
   return iret;
 }
 
-// TODO rename param
-static int __open_codec_context(int *stream_idx /*out*/,
+int HelpOP::open_codec_context(int *stream_idx /*out*/,
                               AVCodecContext **codec_ctx /*out*/,
                               AVFormatContext *fmt_ctx,
                               enum AVMediaType type,
-                              bool is_decode)
+                              bool is_decode,
+                              int width,
+                              int height)
 {
   int ret, stream_index;
   AVStream *st;
@@ -369,6 +323,13 @@ static int __open_codec_context(int *stream_idx /*out*/,
 
   if (!is_decode) {
     (*codec_ctx)->time_base = st->time_base;
+
+    if (type == AVMEDIA_TYPE_VIDEO) {
+      if (width != -1 && height != -1) {
+        (*codec_ctx)->width = width;
+        (*codec_ctx)->height = height;
+      }
+    }
   }
 
   if ((ret = avcodec_open2(*codec_ctx, codec, &opts)) < 0) {
@@ -381,5 +342,20 @@ static int __open_codec_context(int *stream_idx /*out*/,
   return 0;
 }
 
+AVFrame *HelpOP::share_frame(AVFrame *frame) {
+  return frame ? av_frame_clone(frame) : nullptr;
+}
 
-}; // namespace avkid
+AVPacket *HelpOP::share_packet(AVPacket *packet) {
+  return packet ? av_packet_clone(packet) : nullptr;
+}
+
+void HelpOP::unshare_frame(AVFrame *frame) {
+  if (frame) { av_frame_unref(frame); }
+}
+
+void HelpOP::unshare_packet(AVPacket *packet) {
+  if (packet) { av_packet_unref(packet); }
+}
+
+}

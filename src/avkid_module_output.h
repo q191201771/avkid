@@ -14,11 +14,12 @@ class Output {
   public:
     Output(bool async_mode=false);
     ~Output();
+    static std::shared_ptr<Output> create(bool async_mode=false);
 
     // TODO timeout
-    bool open(const std::string &url, AVFormatContext *in_fmt_ctx);
+    bool open(const std::string &url, AVFormatContext *in_fmt_ctx, int width=-1, int height=-1);
 
-    bool do_packet(AVPacket *pkt, bool is_audio);
+    bool do_data(AVPacket *pkt, bool is_audio);
 
   private:
     bool do_packet_(AVPacket *pkt, bool is_audio);

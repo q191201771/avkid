@@ -1,5 +1,5 @@
 /**
- * @file   avkid_decode.h
+ * @file   avkid_module_encode.h
  * @author chef
  *
  */
@@ -10,16 +10,15 @@
 
 namespace avkid {
 
-class Encode {
+class Encode : public PacketProducer {
   public:
     Encode(bool async_mode=false);
     ~Encode();
+    static std::shared_ptr<Encode> create(bool async_mode=false);
 
-    void set_packet_handler(PacketHandlerT ph);
+    bool open(AVFormatContext *in_fmt_ctx, int width=-1, int height=-1);
 
-    bool open(AVFormatContext *in_fmt_ctx);
-
-    bool do_frame(AVFrame *frame, bool is_audio);
+    bool do_data(AVFrame *frame, bool is_audio);
 
   private:
     bool do_frame_(AVFrame *frame, bool is_audio);
@@ -27,7 +26,6 @@ class Encode {
     void do_video_frame(AVFrame *frame);
 
   private:
-    PacketHandlerT ph_;
     bool async_mode_ = false;
     std::shared_ptr<chef::task_thread> thread_;
 

@@ -1,7 +1,11 @@
-#include "avkid_decode.h"
+#include "avkid_module_decode.h"
 #include "avkid.hpp"
 
 namespace avkid {
+
+std::shared_ptr<Decode> Decode::create(bool async_mode) {
+  return std::make_shared<Decode>(async_mode);
+}
 
 Decode::Decode(bool async_mode)
   : async_mode_(async_mode)
@@ -13,26 +17,22 @@ Decode::Decode(bool async_mode)
 }
 
 Decode::~Decode() {
-  do_packet(nullptr, true);
-  do_packet(nullptr, false);
+  do_data(nullptr, true);
+  do_data(nullptr, false);
   thread_.reset();
   avcodec_free_context(&audio_dec_ctx_);
   avcodec_free_context(&video_dec_ctx_);
-}
-
-void Decode::set_frame_handler(FrameHandlerT fh) {
-  fh_ = fh;
 }
 
 bool Decode::open(AVFormatContext *in_fmt_ctx) {
   int iret = -1;
   int audio_stream_index = -1;
   int video_stream_index = -1;
-  if ((iret = __open_codec_context(&audio_stream_index, &audio_dec_ctx_, in_fmt_ctx, AVMEDIA_TYPE_AUDIO, true)) < 0) {
+  if ((iret = HelpOP::open_codec_context(&audio_stream_index, &audio_dec_ctx_, in_fmt_ctx, AVMEDIA_TYPE_AUDIO, true)) < 0) {
     AVKID_LOG_FFMPEG_ERROR(iret);
     return false;
   }
-  if ((iret = __open_codec_context(&video_stream_index, &video_dec_ctx_, in_fmt_ctx, AVMEDIA_TYPE_VIDEO, true)) < 0) {
+  if ((iret = HelpOP::open_codec_context(&video_stream_index, &video_dec_ctx_, in_fmt_ctx, AVMEDIA_TYPE_VIDEO, true)) < 0) {
     AVKID_LOG_FFMPEG_ERROR(iret);
     return false;
   }
@@ -68,14 +68,13 @@ bool Decode::do_packet_(AVPacket *pkt, bool is_audio) {
   }
 
 END:
-  if (pkt) { av_packet_unref(pkt); }
-
-  av_frame_unref(frame);
+  HelpOP::unshare_packet(pkt);
+  HelpOP::unshare_frame(frame);
 
   return (iret != -1);
 }
-bool Decode::do_packet(AVPacket *pkt, bool is_audio) {
-  AVPacket *rpkt = pkt ? av_packet_clone(pkt) : pkt;
+bool Decode::do_data(AVPacket *pkt, bool is_audio) {
+  AVPacket *rpkt = HelpOP::share_packet(pkt);
   if (async_mode_) {
     thread_->add(chef::bind(&Decode::do_packet_, this, rpkt, is_audio));
     return true;

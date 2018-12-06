@@ -1,7 +1,11 @@
-#include "avkid_output.h"
+#include "avkid_module_output.h"
 #include "avkid.hpp"
 
 namespace avkid {
+
+std::shared_ptr<Output> Output::create(bool async_mode) {
+  return std::make_shared<Output>(async_mode);
+}
 
 Output::Output(bool async_mode)
   : async_mode_(async_mode)
@@ -22,7 +26,7 @@ Output::~Output() {
   }
 }
 
-bool Output::open(const std::string &url, AVFormatContext *in_fmt_ctx) {
+bool Output::open(const std::string &url, AVFormatContext *in_fmt_ctx, int width, int height) {
   int iret = -1;
 
   avformat_alloc_output_context2(&out_fmt_ctx_, nullptr, nullptr, url.c_str());
@@ -46,6 +50,13 @@ bool Output::open(const std::string &url, AVFormatContext *in_fmt_ctx) {
     if ((iret = avcodec_parameters_copy(out_stream->codecpar, in_codecpar)) < 0) {
       AVKID_LOG_FFMPEG_ERROR(iret);
       return false;
+    }
+
+    if (in_codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+      if (width != -1 && height != -1) {
+        out_stream->codecpar->width = width;
+        out_stream->codecpar->height = height;
+      }
     }
 
     out_stream->codecpar->codec_tag = 0;
@@ -78,18 +89,18 @@ bool Output::do_packet_(AVPacket *pkt, bool is_audio) {
     return false;
   }
 
-  av_packet_unref(pkt);
+  HelpOP::unshare_packet(pkt);
   return true;
 }
 
-bool Output::do_packet(AVPacket *pkt, bool is_audio) {
+bool Output::do_data(AVPacket *pkt, bool is_audio) {
   if ((is_audio && audio_stream_index_ == -1) ||
       (!is_audio && video_stream_index_ == -1)
   ) {
     return false;
   }
 
-  AVPacket *rpkt = av_packet_clone(pkt);
+  AVPacket *rpkt = HelpOP::share_packet(pkt);
   if (async_mode_) {
     thread_->add(chef::bind(&Output::do_packet_, this, rpkt, is_audio));
     return true;

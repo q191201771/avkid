@@ -1,7 +1,11 @@
-#include "avkid_encode.h"
+#include "avkid_module_encode.h"
 #include "avkid.hpp"
 
 namespace avkid {
+
+std::shared_ptr<Encode> Encode::create(bool async_mode) {
+  return std::make_shared<Encode>(async_mode);
+}
 
 Encode::Encode(bool async_mode)
   : async_mode_(async_mode)
@@ -13,24 +17,20 @@ Encode::Encode(bool async_mode)
 }
 
 Encode::~Encode() {
-  do_frame(nullptr, true);
-  do_frame(nullptr, false);
+  do_data(nullptr, true);
+  do_data(nullptr, false);
   thread_.reset();
 }
 
-void Encode::set_packet_handler(PacketHandlerT ph) {
-  ph_ = ph;
-}
-
-bool Encode::open(AVFormatContext *in_fmt_ctx) {
+bool Encode::open(AVFormatContext *in_fmt_ctx, int width, int height) {
   int iret = -1;
   int audio_stream_index = -1;
   int video_stream_index = -1;
-  if ((iret = __open_codec_context(&audio_stream_index, &audio_enc_ctx_, in_fmt_ctx, AVMEDIA_TYPE_AUDIO, false)) < 0) {
+  if ((iret = HelpOP::open_codec_context(&audio_stream_index, &audio_enc_ctx_, in_fmt_ctx, AVMEDIA_TYPE_AUDIO, false)) < 0) {
     AVKID_LOG_FFMPEG_ERROR(iret);
     return false;
   }
-  if ((iret = __open_codec_context(&video_stream_index, &video_enc_ctx_, in_fmt_ctx, AVMEDIA_TYPE_VIDEO, false)) < 0) {
+  if ((iret = HelpOP::open_codec_context(&video_stream_index, &video_enc_ctx_, in_fmt_ctx, AVMEDIA_TYPE_VIDEO, false, width, height)) < 0) {
     AVKID_LOG_FFMPEG_ERROR(iret);
     return false;
   }
@@ -38,8 +38,8 @@ bool Encode::open(AVFormatContext *in_fmt_ctx) {
   return true;
 }
 
-bool Encode::do_frame(AVFrame *frame, bool is_audio) {
-  AVFrame *rframe = frame ? av_frame_clone(frame) : frame;
+bool Encode::do_data(AVFrame *frame, bool is_audio) {
+  AVFrame *rframe = HelpOP::share_frame(frame);
   if (async_mode_) {
     thread_->add(chef::bind(&Encode::do_frame_, this, rframe, is_audio));
     return true;
@@ -53,7 +53,7 @@ bool Encode::do_frame_(AVFrame *frame, bool is_audio) {
   } else {
     do_video_frame(frame);
   }
-  av_frame_unref(frame);
+  HelpOP::unshare_frame(frame);
   // TODO
   return true;
 }

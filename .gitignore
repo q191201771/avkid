@@ -7,6 +7,7 @@
 
 /FFmpeg
 /resource
+/.invisible
 
 /*.dSYM
 /SECRET.md

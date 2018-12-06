@@ -1,7 +1,11 @@
-#include "avkid_filter.h"
+#include "avkid_module_filter.h"
 #include "avkid.hpp"
 
 namespace avkid {
+
+std::shared_ptr<Filter> Filter::create(bool async_mode) {
+  return std::make_shared<Filter>(async_mode);
+}
 
 Filter::Filter(bool async_mode)
   : async_mode_(async_mode)
@@ -13,15 +17,10 @@ Filter::Filter(bool async_mode)
 }
 
 Filter::~Filter() {
-  do_frame(nullptr, true);
-  do_frame(nullptr, false);
+  do_data(nullptr, true);
+  do_data(nullptr, false);
   thread_.reset();
   // TODO free ffmpeg resource
-}
-
-
-void Filter::set_frame_handler(FrameHandlerT fh) {
-  fh_ = fh;
 }
 
 bool Filter::open(AVFormatContext *in_fmt_ctx) {
@@ -116,8 +115,8 @@ bool Filter::open(AVFormatContext *in_fmt_ctx) {
   return true;
 }
 
-void Filter::do_frame(AVFrame *frame, bool is_audio) {
-  AVFrame *rframe = frame ? av_frame_clone(frame) : frame;
+void Filter::do_data(AVFrame *frame, bool is_audio) {
+  AVFrame *rframe = HelpOP::share_frame(frame);
   if (async_mode_) {
     thread_->add(chef::bind(&Filter::do_frame_, this, rframe, is_audio));
     return;
@@ -132,6 +131,7 @@ void Filter::do_frame_(AVFrame *frame, bool is_audio) {
   if (is_audio) {
     if (fh_) { fh_(frame, is_audio); }
 
+    HelpOP::unshare_frame(frame);
     return;
   }
 
@@ -142,6 +142,7 @@ void Filter::do_frame_(AVFrame *frame, bool is_audio) {
 
   if ((iret = av_buffersrc_add_frame_flags(buffersrc_ctx_, frame, AV_BUFFERSRC_FLAG_KEEP_REF)) < 0) {
     AVKID_LOG_FFMPEG_ERROR(iret);
+    HelpOP::unshare_frame(frame);
     return;
   }
 
@@ -156,8 +157,10 @@ void Filter::do_frame_(AVFrame *frame, bool is_audio) {
 
     if (fh_) { fh_(filt_frame, is_audio); }
 
-    av_frame_unref(filt_frame);
+    HelpOP::unshare_frame(filt_frame);
   }
+  HelpOP::unshare_frame(filt_frame);
+  HelpOP::unshare_frame(frame);
 }
 
 }

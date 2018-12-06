@@ -36,6 +36,9 @@ namespace avkid {
   typedef std::function<void(AVPacket *, bool)> PacketHandlerT;
   typedef std::function<void(AVFrame *, bool)> FrameHandlerT;
 
+  using std::placeholders::_1;
+  using std::placeholders::_2;
+
   class Input;
   class Decode;
   class Filter;
@@ -48,3 +51,5 @@ namespace avkid {
   typedef std::shared_ptr<Encode> EncodePtr;
   typedef std::shared_ptr<Output> OutputPtr;
 }
+
+#include "avkid_combine.h"

@@ -26,10 +26,10 @@ void frame_cb(AVFrame *av_frame, bool is_audio) {
   else if (g_jpeg_count > g_jpeg_total) { return; }
 
   if (g_width == 0 || g_height == 0) {
-    dump_mjpeg(av_frame, jpeg_filename());
+    HelpOP::dump_mjpeg(av_frame, jpeg_filename());
   } else {
-    AVFrame *dst_frame = scale_video_frame(av_frame, g_width, g_height);
-    dump_mjpeg(dst_frame, jpeg_filename());
+    AVFrame *dst_frame = HelpOP::scale_video_frame(av_frame, g_width, g_height);
+    HelpOP::dump_mjpeg(dst_frame, jpeg_filename());
   }
 }
 
@@ -48,15 +48,14 @@ int main(int argc, char **argv) {
     g_decode_async_mode = atoi(argv[5]);
     g_filter_async_mode = atoi(argv[6]);
 
-    global_init_ffmpeg();
+    HelpOP::global_init_ffmpeg();
 
-    g_input = std::make_shared<Input>();
-    DecodePtr g_decode = std::make_shared<Decode>(g_decode_async_mode);
-    FilterPtr g_filter = std::make_shared<Filter>(g_filter_async_mode);
-    g_filter->set_frame_handler(std::bind(&frame_cb, std::placeholders::_1, std::placeholders::_2));
+    g_input = Input::create();
+    auto g_decode = Decode::create(g_decode_async_mode);
+    auto g_filter = Filter::create(g_filter_async_mode);
 
-    AVKID_BIND_DECODE_TO_FILTER(g_decode, g_filter);
-    AVKID_BIND_INPUT_TO_DECODE(g_input, g_decode);
+    combine(combine(g_input, g_decode), g_filter);
+    AVKID_COMBINE_MODULE_C(g_filter, &frame_cb);
 
     if (!g_input->open(g_in_url)) {
       AVKID_LOG_ERROR << "open " << g_in_url << " failed.\n";

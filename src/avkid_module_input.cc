@@ -1,21 +1,23 @@
-#include "avkid_input.h"
+#include "avkid_module_input.h"
 #include "avkid.hpp"
 
 namespace avkid {
 
-Input::~Input() {
-  avformat_close_input(&in_fmt_ctx_);
+std::shared_ptr<Input> Input::create() {
+  return std::make_shared<Input>();
 }
 
-void Input::set_packet_handler(PacketHandlerT ph) {
-  ph_ = ph;
+Input::Input() {}
+
+Input::~Input() {
+  avformat_close_input(&in_fmt_ctx_);
 }
 
 bool Input::open(const std::string &url, uint32_t timeout_msec) {
   int iret = -1;
   url_ = url;
 
-  if ((iret = __open_fmt_ctx_with_timtout(&in_fmt_ctx_, url, timeout_msec)) < 0) {
+  if ((iret = HelpOP::open_fmt_ctx_with_timtout(&in_fmt_ctx_, url, timeout_msec)) < 0) {
     goto END;
   }
 
@@ -72,6 +74,7 @@ bool Input::read(uint32_t duration_ms) {
     if (ph_) {
       if (ct != AVMEDIA_TYPE_AUDIO && ct != AVMEDIA_TYPE_VIDEO) {
         AVKID_LOG_ERROR << "Unknown codec type:" << ct << "\n";
+        HelpOP::unshare_packet(&pkt);
         continue;
       }
       ph_(&pkt, ct == AVMEDIA_TYPE_AUDIO);
@@ -84,7 +87,7 @@ bool Input::read(uint32_t duration_ms) {
     //  }
     //}
 
-    av_packet_unref(&pkt);
+    HelpOP::unshare_packet(&pkt);
   }
 
   return true;

@@ -8,7 +8,7 @@ int main(int argc, char **argv) {
   uint64_t bt = chef::stuff_op::tick_msec();
   {
     if (argc < 5) {
-      AVKID_LOG_ERROR << "Usage: " << argv[0] << " <in> <out> <duration_sec> <output_async_mode>\n";
+      std::cerr << "Usage: " << argv[0] << " <in> <out> <duration_sec> <output_async_mode>\n";
       return -1;
     }
     std::string in = argv[1];
@@ -18,11 +18,11 @@ int main(int argc, char **argv) {
 
     int iret = -1;
 
-    global_init_ffmpeg();
+    HelpOP::global_init_ffmpeg();
 
-    OutputPtr output = std::make_shared<Output>(output_async_mode);
-    InputPtr input = std::make_shared<Input>();
-    AVKID_BIND_INPUT_TO_OUTPUT(input, output);
+    auto input = Input::create();
+    auto output = Output::create(output_async_mode);
+    combine(input, output);
     if (!input->open(in)) {
       AVKID_LOG_ERROR << "Open " << in << " failed.\n";
       return -1;
