@@ -1,22 +1,22 @@
 # avkid
 
-基于ffmpeg的小型框架，目前聚焦于直播相关的业务。
+基于ffmpeg的小型框架，目前聚焦于直播相关的业务（截图、录播、转码、合流等）。
 
 ### 特性
 
 * api尽量简单，隐藏细节
-* 不过度封装
-* module化
+* 不过度封装（比如width、height以及其他参数的取舍）
+* module化，易于复用、维护、测试
 * 所有对象生命周期自动化管理
 * av数据管理，内存优化，无多余拷贝，零泄漏
 * 所有module支持同步/异步，只需配置一个参数，其他无差别
+* 所有module支持音视频单独控制
 * 支持设置时长
-* 音视频单独控制
 * 支持超时
 
 ### avkid的源码文件结构图
 
-![image](https://note.youdao.com/src/516BB5D909B64E3EBED8B337ABF9A195)
+![image](./all.png)
 
 ### 流媒体数据
 
@@ -43,37 +43,75 @@ TODO 补充，说明封装格式，以及mux，demux
 
 avkid中各module的输入输出
 
-![image](http://note.youdao.com/yws/res/18574/B429C435E40D46019569D5F1D5FD856E)
+![image](./all_module.png)
 
-使用：module与module之间，只要输入输出的格式匹配，就可以挂载（avkid中的combine概念），业务方也可以实现自己的module进行挂载
+使用：module与module之间，只要输入输出的格式匹配，就可以挂载（avkid中的combine概念）
+
+用户可以写自己的module，只需实现对应的接口即可
+
+![image](./module_interface.png)
 
 #### 构建应用
 
-1. 录制
+##### 1. 录制
 
-不需要编解码
+不需要编解码，展示一个最简单应用需要的代码
 
-![image](http://note.youdao.com/yws/res/18578/596E9C213EFE4285AF446E506BC0547E)
+![image](./rtmpdump.png)
 
-2. 截图
+##### 2. 截图
 
-![image](http://note.youdao.com/yws/res/18580/0C82E3F4331348449D598D0F8E7FCE39)
+展示如何combine用户自己实现的module
 
-3. 将视频转化成黑白，上下或左右翻转（还没尝试的打水印、高斯处理等等）
+图省略，简单看下代码。
+
+链式combine
+
+##### 3. 将视频转化成黑白，上下或左右翻转（还没尝试的打水印、高斯处理等等）
 
 利用了filter模块。ffmpeg提供了非常多的filter可供使用，我们只需要传入对应的字符串命令即可。
 
+图省略，简单看下代码。
+
 基于avkid模块化可插拔的特性，我们可以在任意环节对AVFrame做filter操作。比如录制黑白视频或截黑白的图片。
 
-![image](http://note.youdao.com/yws/res/18597/E5424B45CA044B4DAC9F185BEE968436)
+实际上，AVFrame可玩的花样很多，而且可以是链式的。
 
-4. 合流
+##### 4. 合流
 
-演示如何更自由的组合avkid module，以及插入业务方的处理
+演示如何更自由的组合avkid module，以及插入业务方的处理逻辑
 
-![image](http://note.youdao.com/yws/res/18602/A68F9CE4E56E41F7B7DD7631CC47CB88)
+![image](./mix.png)
 
-5. avkid和其他库、框架协助
+### 代码走读
 
-比如其他网络库协议栈收到的数据，只需要将数据适配转换成AVPacket格式，就可以挂载decode module
+#### 挂载的几种方式
 
+1. 实现对应接口，调用combine函数
+2. 使用COMBINE宏，灵活的挂载方式
+3. 直接调用do_data函数
+
+#### 合流
+
+1. 音频
+2. 视频
+
+#### AVFrame 和 AVPacket 的生命周期管理
+
+1. 结合avkid中的封装
+2. 发送nullptr
+
+#### 其他
+
+TODO
+
+
+### ffmpeg
+
+#### 各lib介绍
+
+http://ffmpeg.org/documentation.html
+
+#### avfilter 介绍
+
+#### pts dts

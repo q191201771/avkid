@@ -59,6 +59,7 @@ int main(int argc, char **argv) {
     auto dump_jpeg = std::make_shared<DumpJpeg>();
 
     combine(combine(combine(g_input, g_decode), g_filter), dump_jpeg);
+    //AVKID_COMBINE_MODULE_C(g_filter, &frame_cb);
 
     if (!g_input->open(g_in_url)) {
       AVKID_LOG_ERROR << "open " << g_in_url << " failed.\n";
