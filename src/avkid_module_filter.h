@@ -13,16 +13,16 @@ namespace avkid {
 
 class Filter : public ModuleBase, public FrameProducer {
   public:
-    Filter(bool async_mode=false);
+    Filter(bool async_mode=false, enum AudioVideoFlag avf=AVF_BOTH);
     ~Filter();
-    static std::shared_ptr<Filter> create(bool async_mode=false);
+    static std::shared_ptr<Filter> create(bool async_mode=false, enum AudioVideoFlag avf=AVF_BOTH);
 
     bool open(AVFormatContext *in_fmt_ctx);
 
     void do_data(AVFrame *frame, bool is_audio);
 
   private:
-    void do_frame_(AVFrame *frame, bool is_audio);
+    bool do_frame_(AVFrame *frame, bool is_audio);
 
   private:
     AVFilterContext *buffersrc_ctx_ = nullptr;

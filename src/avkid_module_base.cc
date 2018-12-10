@@ -2,8 +2,9 @@
 
 namespace avkid {
 
-ModuleBase::ModuleBase(bool async_mode)
+ModuleBase::ModuleBase(bool async_mode, enum AudioVideoFlag avf)
   : async_mode_(async_mode)
+  , avf_(avf)
 {
   if (async_mode) {
     thread_ = std::make_shared<chef::task_thread>("avkid_base", chef::task_thread::RELEASE_MODE_DO_ALL_DONE);
@@ -12,11 +13,11 @@ ModuleBase::ModuleBase(bool async_mode)
 }
 
 void PacketProducer::set_data_handler(PacketHandlerT ph) {
-  ph_ = ph;
+  packet_handler = ph;
 }
 
 void FrameProducer::set_data_handler(FrameHandlerT fh) {
-  fh_ = fh;
+  frame_handler = fh;
 }
 
 }

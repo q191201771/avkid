@@ -72,10 +72,15 @@ void HelpOP::serialize_to_extradata(unsigned short sps_len,
 }
 
 AVFrame *HelpOP::scale_video_frame(AVFrame *frame, int width, int height) {
+  if (!frame) { return nullptr; }
+
   int iret = -1;
   AVFrame *dst_frame = av_frame_alloc();
   dst_frame->width = width;
   dst_frame->height = height;
+  dst_frame->format = frame->format;
+  dst_frame->pts = frame->pts;
+  dst_frame->pkt_dts = frame->pkt_dts;
   int n = av_image_get_buffer_size((enum AVPixelFormat)frame->format, width, height, 1);
   uint8_t *buf = (uint8_t *)av_malloc(n * sizeof(uint8_t));
   AVKID_LOG_DEBUG << "wh:" << dst_frame->width << " " << dst_frame->height << "\n";
@@ -350,7 +355,7 @@ void HelpOP::frame_alloc_buf(AVFrame *frame, bool is_audio) {
   if (frame) { av_frame_get_buffer(frame, is_audio ? 0 : 32); }
 }
 
-AVFrame *HelpOP::frame_alloc_prop_ref_buf(AVFrame *frame) {
+AVFrame *HelpOP::frame_alloc_copy_prop_ref_buf(AVFrame *frame) {
   return frame ? av_frame_clone(frame) : nullptr;
 }
 

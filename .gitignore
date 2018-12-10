@@ -4,6 +4,7 @@
 *.mp4
 *.flv
 *.jpeg
+tmp
 
 /FFmpeg
 /resource

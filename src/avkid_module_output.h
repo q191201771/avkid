@@ -13,14 +13,14 @@ namespace avkid {
 
 class Output : public ModuleBase {
   public:
-    Output(bool async_mode=false);
+    Output(bool async_mode=false, enum AudioVideoFlag avf=AVF_BOTH);
     ~Output();
-    static std::shared_ptr<Output> create(bool async_mode=false);
+    static std::shared_ptr<Output> create(bool async_mode=false, enum AudioVideoFlag avf=AVF_BOTH);
 
     // TODO timeout
     bool open(const std::string &url, AVFormatContext *in_fmt_ctx, int width=-1, int height=-1);
 
-    bool do_data(AVPacket *pkt, bool is_audio);
+    void do_data(AVPacket *pkt, bool is_audio);
 
   private:
     bool do_packet_(AVPacket *pkt, bool is_audio);

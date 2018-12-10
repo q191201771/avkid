@@ -13,12 +13,12 @@ namespace avkid {
 
 class Input : public ModuleBase, public PacketProducer {
   public:
-    Input();
+    Input(enum AudioVideoFlag avf=AVF_BOTH);
     ~Input();
-    static std::shared_ptr<Input> create();
+    static std::shared_ptr<Input> create(enum AudioVideoFlag avf=AVF_BOTH);
 
     // TODO timeout
-    bool open(const std::string &url, uint32_t timeout_msec=0, enum audio_video_flag avf=avf_both);
+    bool open(const std::string &url, uint32_t timeout_msec=0);
 
     bool read(uint32_t duration_ms=0);
 

@@ -3,12 +3,12 @@
 
 namespace avkid {
 
-std::shared_ptr<Encode> Encode::create(bool async_mode) {
-  return std::make_shared<Encode>(async_mode);
+std::shared_ptr<Encode> Encode::create(bool async_mode, enum AudioVideoFlag avf) {
+  return std::make_shared<Encode>(async_mode, avf);
 }
 
-Encode::Encode(bool async_mode)
-  : ModuleBase(async_mode)
+Encode::Encode(bool async_mode, enum AudioVideoFlag avf)
+  : ModuleBase(async_mode, avf)
 {
 }
 
@@ -22,25 +22,32 @@ bool Encode::open(AVFormatContext *in_fmt_ctx, int width, int height) {
   int iret = -1;
   int audio_stream_index = -1;
   int video_stream_index = -1;
-  if ((iret = HelpOP::open_codec_context(&audio_stream_index, &audio_enc_ctx_, in_fmt_ctx, AVMEDIA_TYPE_AUDIO, false)) < 0) {
-    AVKID_LOG_FFMPEG_ERROR(iret);
-    return false;
+  if (avf_audio_on()) {
+    if ((iret = HelpOP::open_codec_context(&audio_stream_index, &audio_enc_ctx_, in_fmt_ctx, AVMEDIA_TYPE_AUDIO, false)) < 0) {
+      AVKID_LOG_FFMPEG_ERROR(iret);
+      return false;
+    }
   }
-  if ((iret = HelpOP::open_codec_context(&video_stream_index, &video_enc_ctx_, in_fmt_ctx, AVMEDIA_TYPE_VIDEO, false, width, height)) < 0) {
-    AVKID_LOG_FFMPEG_ERROR(iret);
-    return false;
+  if (avf_video_on()) {
+    if ((iret = HelpOP::open_codec_context(&video_stream_index, &video_enc_ctx_, in_fmt_ctx, AVMEDIA_TYPE_VIDEO, false, width, height)) < 0) {
+      AVKID_LOG_FFMPEG_ERROR(iret);
+      return false;
+    }
   }
 
   return true;
 }
 
-bool Encode::do_data(AVFrame *frame, bool is_audio) {
-  AVFrame *rframe = HelpOP::frame_alloc_prop_ref_buf(frame);
+void Encode::do_data(AVFrame *frame, bool is_audio) {
+  if (is_audio && !avf_audio_on()) { return; }
+  if (!is_audio && !avf_video_on()) { return; }
+
+  AVFrame *rframe = HelpOP::frame_alloc_copy_prop_ref_buf(frame);
   if (async_mode_) {
     thread_->add(chef::bind(&Encode::do_frame_, this, rframe, is_audio));
-    return true;
+    return;
   }
-  return do_frame_(rframe, is_audio);
+  do_frame_(rframe, is_audio);
 }
 
 bool Encode::do_frame_(AVFrame *frame, bool is_audio) {
@@ -58,7 +65,7 @@ void Encode::do_audio_frame(AVFrame *frame) {
   int iret = -1;
   AVPacket packet = {0};
 
-  AVKID_LOG_FRAME(frame, true);
+  //AVKID_LOG_FRAME(frame, true);
 
   if ((iret = avcodec_send_frame(audio_enc_ctx_, frame)) < 0) {
     AVKID_LOG_FFMPEG_ERROR(iret);
@@ -74,8 +81,8 @@ void Encode::do_audio_frame(AVFrame *frame) {
       return;
     }
 
-    AVKID_LOG_PACKET(&packet, true);
-    if (ph_) { ph_(&packet, true); }
+    //AVKID_LOG_PACKET(&packet, true);
+    if (packet_handler) { packet_handler(&packet, true); }
   }
 }
 
@@ -83,7 +90,7 @@ void Encode::do_video_frame(AVFrame *frame) {
   int iret = -1;
   AVPacket packet = {0};
 
-  AVKID_LOG_FRAME(frame, false);
+  //AVKID_LOG_FRAME(frame, false);
 
   if ((iret = avcodec_send_frame(video_enc_ctx_, frame)) < 0) {
     AVKID_LOG_FFMPEG_ERROR(iret);
@@ -98,8 +105,8 @@ void Encode::do_video_frame(AVFrame *frame) {
       return;
     }
 
-    AVKID_LOG_PACKET(&packet, false);
-    if (ph_) { ph_(&packet, false); }
+    //AVKID_LOG_PACKET(&packet, false);
+    if (packet_handler) { packet_handler(&packet, false); }
   }
 }
 

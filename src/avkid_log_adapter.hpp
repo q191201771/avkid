@@ -19,4 +19,20 @@
 #define FFMPEG_FAILED_LOG(funcname, ret) AVKID_LOG_ERROR << funcname << " failed. " << HelpOP::stringify_ffmpeg_error(ret) << "\n";
 
 #define AVKID_LOG_PACKET(packet, is_audio) if (packet) AVKID_LOG_DEBUG << "Packet " << (is_audio ? "A" : "V") << " pts:" << (packet)->pts << " dts:" << (packet)->dts << " duration:" << (packet)->duration << " size:" << (packet)->size << "\n";
-#define AVKID_LOG_FRAME(frame, is_audio)   if (frame) AVKID_LOG_DEBUG << "Frame " << (is_audio ? "A" : "V") << " pts:" << (frame)->pts << " dts:" << (frame)->pkt_dts << " bets:" << (frame)->best_effort_timestamp <<  " duration:" << (frame)->pkt_duration << " kframe:" << (frame)->key_frame << "\n";
+
+#define AVKID_LOG_FRAME(frame, is_audio) \
+if (frame) { \
+  std::ostringstream oss; \
+oss << "Frame " << (is_audio ? "A" : "V") << " linesize:(" << (frame)->linesize[0] << " " << (frame)->linesize[1] << " " << (frame)->linesize[2] << ")"; \
+oss << " pts:" << (frame)->pts << " dts:" << (frame)->pkt_dts << " duration:" << (frame)->pkt_duration; \
+oss << " format:" << av_get_sample_fmt_name((enum AVSampleFormat)(frame)->format); \
+  if (is_audio) { \
+oss << " nb_samples:" << (frame)->nb_samples << " sample_rate:" << (frame)->sample_rate << " channel_layout:" << (frame)->channel_layout; \
+oss << " channels:" << (frame)->channels; \
+  } else { \
+oss << " width:" << (frame)->width << " height:" << (frame)->height << " format:" << av_get_sample_fmt_name((enum AVSampleFormat)(frame)->format); \
+oss << " key_frame:" << (frame)->key_frame; \
+  } \
+  AVKID_LOG_INFO << oss.str() << "\n"; \
+}
+

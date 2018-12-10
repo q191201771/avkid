@@ -3,12 +3,12 @@
 
 namespace avkid {
 
-std::shared_ptr<Output> Output::create(bool async_mode) {
-  return std::make_shared<Output>(async_mode);
+std::shared_ptr<Output> Output::create(bool async_mode, enum AudioVideoFlag avf) {
+  return std::make_shared<Output>(async_mode, avf);
 }
 
-Output::Output(bool async_mode)
-  : ModuleBase(async_mode)
+Output::Output(bool async_mode, enum AudioVideoFlag avf)
+  : ModuleBase(async_mode, avf)
 {
 }
 
@@ -34,10 +34,11 @@ bool Output::open(const std::string &url, AVFormatContext *in_fmt_ctx, int width
     AVStream *in_stream = in_fmt_ctx->streams[i];
     AVCodecParameters *in_codecpar = in_stream->codecpar;
 
-    switch (in_codecpar->codec_type) {
-    case AVMEDIA_TYPE_AUDIO: audio_stream_index_ = stream_index++; break;
-    case AVMEDIA_TYPE_VIDEO: video_stream_index_ = stream_index++; break;
-    default: continue;
+    if (avf_audio_on() && in_codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
+      audio_stream_index_ = stream_index++;
+    }
+    if (avf_video_on() && in_codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+      video_stream_index_ = stream_index++;
     }
 
     out_stream = avformat_new_stream(out_fmt_ctx_, nullptr);
@@ -89,20 +90,17 @@ bool Output::do_packet_(AVPacket *pkt, bool is_audio) {
   return true;
 }
 
-bool Output::do_data(AVPacket *pkt, bool is_audio) {
-  if ((is_audio && audio_stream_index_ == -1) ||
-      (!is_audio && video_stream_index_ == -1)
-  ) {
-    return false;
-  }
+void Output::do_data(AVPacket *pkt, bool is_audio) {
+  if (is_audio && audio_stream_index_ == -1) { return; }
+  if (!is_audio && video_stream_index_ == -1) { return; }
 
   AVPacket *rpkt = HelpOP::packet_alloc_prop_ref_buf(pkt);
   if (async_mode_) {
     thread_->add(chef::bind(&Output::do_packet_, this, rpkt, is_audio));
-    return true;
+    return;
   }
 
-  return do_packet_(rpkt, is_audio);
+  do_packet_(rpkt, is_audio);
 }
 
 }

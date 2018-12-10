@@ -18,20 +18,23 @@ std::string jpeg_filename() {
   return std::string(buf);
 }
 
-void frame_cb(AVFrame *av_frame, bool is_audio) {
-  if (is_audio || av_frame->key_frame != 1) { return; }
+class DumpJpeg : public FrameConsumerInterface {
+  public:
+    virtual void do_data(AVFrame *frame, bool is_audio) {
+      if (is_audio || frame->key_frame != 1) { return; }
 
-  g_jpeg_count++;
-  if (g_jpeg_count == g_jpeg_total) { g_input->stop_read(); }
-  else if (g_jpeg_count > g_jpeg_total) { return; }
+      g_jpeg_count++;
+      if (g_jpeg_count == g_jpeg_total) { g_input->stop_read(); }
+      else if (g_jpeg_count > g_jpeg_total) { return; }
 
-  if (g_width == 0 || g_height == 0) {
-    HelpOP::dump_mjpeg(av_frame, jpeg_filename());
-  } else {
-    AVFrame *dst_frame = HelpOP::scale_video_frame(av_frame, g_width, g_height);
-    HelpOP::dump_mjpeg(dst_frame, jpeg_filename());
-  }
-}
+      if (g_width == 0 || g_height == 0) {
+        HelpOP::dump_mjpeg(frame, jpeg_filename());
+      } else {
+        AVFrame *dst_frame = HelpOP::scale_video_frame(frame, g_width, g_height);
+        HelpOP::dump_mjpeg(dst_frame, jpeg_filename());
+      }
+    }
+};
 
 int main(int argc, char **argv) {
   uint64_t bt = chef::stuff_op::tick_msec();
@@ -53,9 +56,9 @@ int main(int argc, char **argv) {
     g_input = Input::create();
     auto g_decode = Decode::create(g_decode_async_mode);
     auto g_filter = Filter::create(g_filter_async_mode);
+    auto dump_jpeg = std::make_shared<DumpJpeg>();
 
-    combine(combine(g_input, g_decode), g_filter);
-    AVKID_COMBINE_MODULE_C(g_filter, &frame_cb);
+    combine(combine(combine(g_input, g_decode), g_filter), dump_jpeg);
 
     if (!g_input->open(g_in_url)) {
       AVKID_LOG_ERROR << "open " << g_in_url << " failed.\n";

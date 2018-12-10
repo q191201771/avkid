@@ -10,30 +10,28 @@
 
 namespace avkid {
 
-enum audio_video_flag {
-  avf_none  = 0,
-  avf_audio = 1,
-  avf_video = 2,
-  avf_both  = 4
+enum AudioVideoFlag {
+  AVF_NONE  = 0,
+  AVF_AUDIO = 1,
+  AVF_VIDEO = 2,
+  AVF_BOTH  = 4
 };
 
 class ModuleBase {
   public:
     virtual ~ModuleBase() {}
 
-    ModuleBase(bool async_mode=false);
+    ModuleBase(bool async_mode=false, enum AudioVideoFlag avf=AVF_BOTH);
 
-    bool avf_audio_on() { return avf_ == avf_audio || avf_ == avf_both; }
-    bool avf_video_on() { return avf_ == avf_video || avf_ == avf_both; }
+    bool avf_audio_on() { return avf_ == AVF_AUDIO || avf_ == AVF_BOTH; }
+    bool avf_video_on() { return avf_ == AVF_VIDEO || avf_ == AVF_BOTH; }
 
   protected:
     bool async_mode_ = false;
     std::shared_ptr<chef::task_thread> thread_;
-    audio_video_flag avf_ = avf_both;
+    AudioVideoFlag avf_ = AVF_BOTH;
 
 };
-
-// TODO consumer
 
 class PacketProducer {
   public:
@@ -42,7 +40,7 @@ class PacketProducer {
     void set_data_handler(PacketHandlerT ph);
 
   protected:
-    PacketHandlerT ph_;
+    PacketHandlerT packet_handler;
 };
 
 class FrameProducer {
@@ -52,8 +50,7 @@ class FrameProducer {
     void set_data_handler(FrameHandlerT fh);
 
   protected:
-    FrameHandlerT fh_;
+    FrameHandlerT frame_handler;
 };
-
 
 }

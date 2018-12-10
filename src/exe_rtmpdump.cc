@@ -23,6 +23,7 @@ int main(int argc, char **argv) {
     auto input = Input::create();
     auto output = Output::create(output_async_mode);
     combine(input, output);
+
     if (!input->open(in)) {
       AVKID_LOG_ERROR << "Open " << in << " failed.\n";
       return -1;

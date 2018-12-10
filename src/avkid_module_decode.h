@@ -13,13 +13,13 @@ namespace avkid {
 
 class Decode : public ModuleBase, public FrameProducer {
   public:
-    Decode(bool async_mode=false);
+    Decode(bool async_mode=false, enum AudioVideoFlag avf=AVF_BOTH);
     ~Decode();
-    static std::shared_ptr<Decode> create(bool async_mode=false);
+    static std::shared_ptr<Decode> create(bool async_mode=false, enum AudioVideoFlag avf=AVF_BOTH);
 
     bool open(AVFormatContext *in_fmt_ctx);
 
-    bool do_data(AVPacket *pkt, bool is_audio);
+    void do_data(AVPacket *pkt, bool is_audio);
 
   private:
     bool do_packet_(AVPacket *pkt, bool is_audio);

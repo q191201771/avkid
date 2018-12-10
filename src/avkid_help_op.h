@@ -17,6 +17,38 @@ class HelpOP {
     static std::string av_make_error_string(int errnum);
     static std::string stringify_ffmpeg_error(int err);
 
+  public:
+    static int open_fmt_ctx_with_timtout(AVFormatContext **fmt_ctx, const std::string &url, uint32_t timeout_msec);
+    static int open_codec_context(int *stream_idx /*out*/,
+                                  AVCodecContext **codec_ctx /*out*/,
+                                  AVFormatContext *fmt_ctx,
+                                  enum AVMediaType type,
+                                  bool is_decode,
+                                  int width=-1,
+                                  int height=-1);
+
+  public:
+    static AVFrame *scale_video_frame(AVFrame *frame, int width, int height);
+    static bool dump_mjpeg(AVFrame *frame, const std::string &filename);
+
+    // 将<part>绘制到<bg>上，<part>的宽高应小于<bg>的宽高
+    // <x>和<y>表示绘制到<bg>上时，从<bg>的哪个坐标开始
+    static bool mix_video_pin_frame(AVFrame *bg, AVFrame *part, int x, int y);
+
+  public:
+    static AVFrame *frame_alloc_prop();
+    static void frame_alloc_buf(AVFrame *frame, bool is_audio);
+    static AVFrame *frame_alloc_copy_prop_ref_buf(AVFrame *frame);
+    static void frame_free_prop_unref_buf(AVFrame **frame);
+    static void frame_unref_buf(AVFrame *frame);
+    // TODO
+    //static AVFrame *frame_alloc_copy_prop(AVFrame *fram);
+
+    static AVPacket *packet_alloc_prop_ref_buf(AVPacket *packet);
+    static void packet_free_prop_unref_buf(AVPacket **packet);
+    static void packet_unref_buf(AVPacket *packet);
+
+  public:
     static void deserialize_from_extradata(uint8_t *extradata,
                                            int extradata_size,
                                            unsigned short *sps_len /*out*/,
@@ -32,29 +64,6 @@ class HelpOP {
                                        uint8_t *extradata /*out*/,
                                        int *extradata_size /*out*/);
 
-    static AVFrame *scale_video_frame(AVFrame *frame, int width, int height);
-    static bool dump_mjpeg(AVFrame *frame, const std::string &filename);
-
-    static bool mix_video_pin_frame(AVFrame *bg, AVFrame *part, int x, int y);
-
-    static int open_fmt_ctx_with_timtout(AVFormatContext **fmt_ctx, const std::string &url, uint32_t timeout_msec);
-    static int open_codec_context(int *stream_idx /*out*/,
-                                  AVCodecContext **codec_ctx /*out*/,
-                                  AVFormatContext *fmt_ctx,
-                                  enum AVMediaType type,
-                                  bool is_decode,
-                                  int width=-1,
-                                  int height=-1);
-
-    static AVFrame *frame_alloc_prop();
-    static void frame_alloc_buf(AVFrame *frame, bool is_audio);
-    static AVFrame *frame_alloc_prop_ref_buf(AVFrame *frame);
-    static void frame_free_prop_unref_buf(AVFrame **frame);
-    static void frame_unref_buf(AVFrame *frame);
-
-    static AVPacket *packet_alloc_prop_ref_buf(AVPacket *packet);
-    static void packet_free_prop_unref_buf(AVPacket **packet);
-    static void packet_unref_buf(AVPacket *packet);
 };
 
 }

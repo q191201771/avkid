@@ -3,12 +3,12 @@
 
 namespace avkid {
 
-std::shared_ptr<Filter> Filter::create(bool async_mode) {
-  return std::make_shared<Filter>(async_mode);
+std::shared_ptr<Filter> Filter::create(bool async_mode, enum AudioVideoFlag avf) {
+  return std::make_shared<Filter>(async_mode, avf);
 }
 
-Filter::Filter(bool async_mode)
-  : ModuleBase(async_mode)
+Filter::Filter(bool async_mode, enum AudioVideoFlag avf)
+  : ModuleBase(async_mode, avf)
 {
 }
 
@@ -112,7 +112,10 @@ bool Filter::open(AVFormatContext *in_fmt_ctx) {
 }
 
 void Filter::do_data(AVFrame *frame, bool is_audio) {
-  AVFrame *rframe = HelpOP::frame_alloc_prop_ref_buf(frame);
+  if (is_audio && !avf_audio_on()) { return; }
+  if (!is_audio && !avf_video_on()) { return; }
+
+  AVFrame *rframe = HelpOP::frame_alloc_copy_prop_ref_buf(frame);
   if (async_mode_) {
     thread_->add(chef::bind(&Filter::do_frame_, this, rframe, is_audio));
     return;
@@ -121,14 +124,14 @@ void Filter::do_data(AVFrame *frame, bool is_audio) {
   do_frame_(rframe, is_audio);
 }
 
-void Filter::do_frame_(AVFrame *frame, bool is_audio) {
+bool Filter::do_frame_(AVFrame *frame, bool is_audio) {
   int iret = -1;
 
   if (is_audio) {
-    if (fh_) { fh_(frame, is_audio); }
+    if (frame_handler) { frame_handler(frame, is_audio); }
 
     HelpOP::frame_free_prop_unref_buf(&frame);
-    return;
+    return true;
   }
 
   AVFrame *filt_frame = HelpOP::frame_alloc_prop();
@@ -138,24 +141,28 @@ void Filter::do_frame_(AVFrame *frame, bool is_audio) {
   if ((iret = av_buffersrc_add_frame_flags(buffersrc_ctx_, frame, AV_BUFFERSRC_FLAG_KEEP_REF)) < 0) {
     AVKID_LOG_FFMPEG_ERROR(iret);
     HelpOP::frame_free_prop_unref_buf(&frame);
-    return;
+    return false;
   }
 
-  while (1) {
+  for (; ; ) {
     iret = av_buffersink_get_frame(buffersink_ctx_, filt_frame);
-    if (iret == AVERROR(EAGAIN) || iret == AVERROR_EOF) { break; }
+    if (iret < 0) { break; }
 
-    if (iret < 0) {
-      AVKID_LOG_FFMPEG_ERROR(iret);
-      break;
-    }
-
-    if (fh_) { fh_(filt_frame, is_audio); }
+    if (frame_handler) { frame_handler(filt_frame, is_audio); }
 
     HelpOP::frame_free_prop_unref_buf(&filt_frame);
   }
   HelpOP::frame_free_prop_unref_buf(&filt_frame);
   HelpOP::frame_free_prop_unref_buf(&frame);
+
+  if (iret == AVERROR(EAGAIN) || iret == AVERROR_EOF) {
+    return true;
+  } else if (iret < 0) {
+    AVKID_LOG_FFMPEG_ERROR(iret);
+    return false;
+  }
+  AVKID_LOG_WARN << "CHEFNOTICEME should no be here.\n";
+  return true;
 }
 
 }

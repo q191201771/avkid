@@ -3,12 +3,12 @@
 
 namespace avkid {
 
-std::shared_ptr<Decode> Decode::create(bool async_mode) {
-  return std::make_shared<Decode>(async_mode);
+std::shared_ptr<Decode> Decode::create(bool async_mode, enum AudioVideoFlag avf) {
+  return std::make_shared<Decode>(async_mode, avf);
 }
 
-Decode::Decode(bool async_mode)
-  : ModuleBase(async_mode)
+Decode::Decode(bool async_mode, enum AudioVideoFlag avf)
+  : ModuleBase(async_mode, avf)
 {
 }
 
@@ -24,13 +24,17 @@ bool Decode::open(AVFormatContext *in_fmt_ctx) {
   int iret = -1;
   int audio_stream_index = -1;
   int video_stream_index = -1;
-  if ((iret = HelpOP::open_codec_context(&audio_stream_index, &audio_dec_ctx_, in_fmt_ctx, AVMEDIA_TYPE_AUDIO, true)) < 0) {
-    AVKID_LOG_FFMPEG_ERROR(iret);
-    return false;
+  if (avf_audio_on()) {
+    if ((iret = HelpOP::open_codec_context(&audio_stream_index, &audio_dec_ctx_, in_fmt_ctx, AVMEDIA_TYPE_AUDIO, true)) < 0) {
+      AVKID_LOG_FFMPEG_ERROR(iret);
+      return false;
+    }
   }
-  if ((iret = HelpOP::open_codec_context(&video_stream_index, &video_dec_ctx_, in_fmt_ctx, AVMEDIA_TYPE_VIDEO, true)) < 0) {
-    AVKID_LOG_FFMPEG_ERROR(iret);
-    return false;
+  if (avf_video_on()) {
+    if ((iret = HelpOP::open_codec_context(&video_stream_index, &video_dec_ctx_, in_fmt_ctx, AVMEDIA_TYPE_VIDEO, true)) < 0) {
+      AVKID_LOG_FFMPEG_ERROR(iret);
+      return false;
+    }
   }
 
   return true;
@@ -60,7 +64,7 @@ bool Decode::do_packet_(AVPacket *pkt, bool is_audio) {
     }
 
     //AVKID_LOG_FRAME(frame, is_audio);
-    if (fh_) { fh_(frame, is_audio); }
+    if (frame_handler) { frame_handler(frame, is_audio); }
   }
 
 END:
@@ -69,14 +73,17 @@ END:
 
   return (iret != -1);
 }
-bool Decode::do_data(AVPacket *pkt, bool is_audio) {
+void Decode::do_data(AVPacket *pkt, bool is_audio) {
+  if (is_audio && !avf_audio_on()) { return; }
+  if (!is_audio && !avf_video_on()) { return; }
+
   AVPacket *rpkt = HelpOP::packet_alloc_prop_ref_buf(pkt);
   if (async_mode_) {
     thread_->add(chef::bind(&Decode::do_packet_, this, rpkt, is_audio));
-    return true;
+    return;
   }
 
-  return do_packet_(rpkt, is_audio);
+  do_packet_(rpkt, is_audio);
 }
 
 }

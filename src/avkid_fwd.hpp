@@ -40,6 +40,13 @@ namespace avkid {
   using std::placeholders::_1;
   using std::placeholders::_2;
 
+  class PacketConsumerInterface;
+  class FrameConsumerInterface;
+  class HelpOP;
+  class MixOP;
+  class ModuleBase;
+  class PacketProducer;
+  class FrameProducer;
   class Input;
   class Decode;
   class Filter;

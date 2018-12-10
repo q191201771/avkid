@@ -3,20 +3,22 @@
 
 namespace avkid {
 
-std::shared_ptr<Input> Input::create() {
-  return std::make_shared<Input>();
+std::shared_ptr<Input> Input::create(enum AudioVideoFlag avf) {
+  return std::make_shared<Input>(avf);
 }
 
-Input::Input() {}
+Input::Input(enum AudioVideoFlag avf)
+  : ModuleBase(false, avf)
+{
+}
 
 Input::~Input() {
   avformat_close_input(&in_fmt_ctx_);
 }
 
-bool Input::open(const std::string &url, uint32_t timeout_msec, enum audio_video_flag avf) {
+bool Input::open(const std::string &url, uint32_t timeout_msec) {
   int iret = -1;
   url_ = url;
-  avf_ = avf;
 
   if ((iret = HelpOP::open_fmt_ctx_with_timtout(&in_fmt_ctx_, url, timeout_msec)) < 0) {
     goto END;
@@ -72,11 +74,11 @@ bool Input::read(uint32_t duration_ms) {
       stop_read_flag_ = true;
     }
 
-    if (ph_) {
+    if (packet_handler) {
       if (ct == AVMEDIA_TYPE_AUDIO) {
-        if (avf_audio_on()) { ph_(&pkt, true); }
+        if (avf_audio_on()) { packet_handler(&pkt, true); }
       } else if (ct == AVMEDIA_TYPE_VIDEO) {
-        if (avf_video_on()) { ph_(&pkt, false); }
+        if (avf_video_on()) { packet_handler(&pkt, false); }
       } else {
         AVKID_LOG_ERROR << "Unknown codec type:" << ct << "\n";
       }
