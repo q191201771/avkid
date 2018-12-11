@@ -11,7 +11,7 @@
 
 namespace avkid {
 
-class Filter : public ModuleBase, public FrameProducer {
+class Filter : public ModuleBase, public FrameConsumerInterface, public FrameProducer {
   public:
     Filter(bool async_mode=false, enum AudioVideoFlag avf=AVF_BOTH);
     ~Filter();
@@ -19,7 +19,7 @@ class Filter : public ModuleBase, public FrameProducer {
 
     bool open(AVFormatContext *in_fmt_ctx);
 
-    void do_data(AVFrame *frame, bool is_audio);
+    virtual void do_data(AVFrame *frame, bool is_audio);
 
   private:
     bool do_frame_(AVFrame *frame, bool is_audio);

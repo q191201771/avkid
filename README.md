@@ -50,6 +50,10 @@ avkid中各module的输入输出
 
 用户可以写自己的module，只需实现对应的接口即可
 
+#### Broadcast
+
+一个module可以挂载多个module
+
 ![image](./doc/module_interface.png)
 
 #### 构建应用
@@ -62,9 +66,11 @@ avkid中各module的输入输出
 
 ##### 2. 截图
 
-演示如何combine用户自己实现的module
+演示如何combine用户自己实现的module，以及如果利用Broadcast将一个module和多个module进行挂载。
 
-图省略，简单看下代码。
+拉一路流，即截图又录制。
+
+![image](./doc/bc.png)
 
 链式combine
 
@@ -91,6 +97,7 @@ avkid中各module的输入输出
 1. 实现对应接口，调用combine函数
 2. 使用COMBINE宏，灵活的挂载方式
 3. 直接调用do_data函数
+4. broadcast
 
 #### 合流
 

@@ -11,7 +11,7 @@
 
 namespace avkid {
 
-class Output : public ModuleBase {
+class Output : public ModuleBase, public PacketConsumerInterface {
   public:
     Output(bool async_mode=false, enum AudioVideoFlag avf=AVF_BOTH);
     ~Output();
@@ -20,7 +20,7 @@ class Output : public ModuleBase {
     // TODO timeout
     bool open(const std::string &url, AVFormatContext *in_fmt_ctx, int width=-1, int height=-1);
 
-    void do_data(AVPacket *pkt, bool is_audio);
+    virtual void do_data(AVPacket *pkt, bool is_audio);
 
   private:
     bool do_packet_(AVPacket *pkt, bool is_audio);

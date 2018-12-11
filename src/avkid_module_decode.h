@@ -11,7 +11,7 @@
 
 namespace avkid {
 
-class Decode : public ModuleBase, public FrameProducer {
+class Decode : public ModuleBase, public PacketConsumerInterface, public FrameProducer {
   public:
     Decode(bool async_mode=false, enum AudioVideoFlag avf=AVF_BOTH);
     ~Decode();
@@ -19,7 +19,7 @@ class Decode : public ModuleBase, public FrameProducer {
 
     bool open(AVFormatContext *in_fmt_ctx);
 
-    void do_data(AVPacket *pkt, bool is_audio);
+    virtual void do_data(AVPacket *pkt, bool is_audio);
 
   private:
     bool do_packet_(AVPacket *pkt, bool is_audio);

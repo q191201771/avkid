@@ -18,6 +18,10 @@ std::string jpeg_filename() {
   return std::string(buf);
 }
 
+std::string flv_filename() {
+  return "output.flv";
+}
+
 class DumpJpeg : public FrameConsumerInterface {
   public:
     virtual void do_data(AVFrame *frame, bool is_audio) {
@@ -54,19 +58,35 @@ int main(int argc, char **argv) {
     HelpOP::global_init_ffmpeg();
 
     g_input = Input::create();
+
     auto g_decode = Decode::create(g_decode_async_mode);
     auto g_filter = Filter::create(g_filter_async_mode);
     auto dump_jpeg = std::make_shared<DumpJpeg>();
 
-    combine(combine(combine(g_input, g_decode), g_filter), dump_jpeg);
-    //AVKID_COMBINE_MODULE_C(g_filter, &frame_cb);
+    auto output = Output::create();
+
+    auto bc = std::make_shared<InputBroadcast>();
+
+    combine(g_input, bc);
+
+    // 用于解码后生成jpeg图片
+    bc->add_listener(g_decode);
+    combine(combine(g_decode, g_filter), dump_jpeg);
+
+    // 用于录制
+    bc->add_listener(output);
+
 
     if (!g_input->open(g_in_url)) {
       AVKID_LOG_ERROR << "open " << g_in_url << " failed.\n";
       return -1;
     }
+
     g_decode->open(g_input->in_fmt_ctx());
     g_filter->open(g_input->in_fmt_ctx());
+
+    output->open(flv_filename(), g_input->in_fmt_ctx());
+
     g_input->read();
   }
   std::cerr << "Cost:" << chef::stuff_op::tick_msec() - bt << "\n";

@@ -3,7 +3,7 @@ CXXFLAGS = -g -O2 -std=c++11 -pipe -fPIC -D__STDC_FORMAT_MACROS -D__STDC_CONSTAN
 
 LINKFLAGS = -lavformat -lavcodec -lavutil -lavfilter -lswscale -lfdk-aac
 
-all: rtmp2jpeg rtmpdump rtmp_decode_encode mix tag_nalus
+all: rtmp_bc rtmpdump rtmp_decode_encode mix tag_nalus
 
 COMMON_HEADER = $(wildcard src/*.h)
 COMMON_HEADER += $(wildcard src/*.hpp)
@@ -18,14 +18,14 @@ COMMON_SRC = \
 	src/avkid_mix_op.cc \
 	src/avkid_help_op.cc
 
-RTMP_2_JPEG_SRC = src/exe_rtmp2jpeg.cc $(COMMON_SRC)
+RTMP_BC_SRC = src/exe_rtmp_bc.cc $(COMMON_SRC)
 RTMPDUMP_SRC = src/exe_rtmpdump.cc $(COMMON_SRC)
 RTMP_DECODE_ENCODE_SRC = src/exe_rtmp_decode_encode.cc $(COMMON_SRC)
 MIX_SRC = src/exe_mix.cc $(COMMON_SRC)
 TAG_NALUS_SRC = src/exe_tag_nalus.cc
 
-rtmp2jpeg: $(RTMP_2_JPEG_SRC) $(COMMON_HEADER) $(COMMON_SRC)
-	$(CXX) $(CXXFLAGS) -o rtmp2jpeg $(RTMP_2_JPEG_SRC) $(LINKFLAGS)
+rtmp_bc: $(RTMP_BC_SRC) $(COMMON_HEADER) $(COMMON_SRC)
+	$(CXX) $(CXXFLAGS) -o rtmp_bc $(RTMP_BC_SRC) $(LINKFLAGS)
 
 rtmpdump: $(RTMPDUMP_SRC) $(COMMON_HEADER) $(COMMON_SRC)
 	$(CXX) $(CXXFLAGS) -o rtmpdump $(RTMPDUMP_SRC) $(LINKFLAGS)
@@ -40,12 +40,8 @@ tag_nalus: $(TAG_NALUS_SRC) $(COMMO_HEADER)
 	$(CXX) $(CXXFLAGS) -o tag_nalus $(TAG_NALUS_SRC) $(LINKFLAGS)
 
 tail:
-	rm -rf rtmp2jpeg.dSYM | date | ls -l rtmp2jpeg
-	rm -rf rtmpdump.dSYM | date | ls -l rtmpdump
-	rm -rf rtmp_decode_encode.dSYM | date | ls -l rtmp_decode_encode
-	rm -rf mix.dSYM | date | ls -l mix
-	rm -rf tag_nalus.dSYM | date | ls -l tag_nalus
+	rm -rf *.dSYM
 
 clean:
-	rm -rf rtmp2jpeg rtmpdump tag_nalus
+	rm -rf rtmp_bc rtmpdump rtmp_decode_encode mix tag_nalus
 

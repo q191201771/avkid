@@ -28,6 +28,7 @@ extern "C" {
 
 #include <string>
 #include <functional>
+#include <unordered_set>
 
 #include "chef_snippet.hpp"
 #include "chef_task_thread.hpp"

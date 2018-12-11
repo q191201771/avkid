@@ -23,10 +23,10 @@ int main(int argc, char **argv) {
 
     HelpOP::global_init_ffmpeg();
 
-    auto output = Output::create(decode_async);
-    auto encode = Encode::create(filter_async);
-    auto filter = Filter::create(encode_async);
-    auto decode = Decode::create(output_async);
+    auto output = Output::create(output_async);
+    auto encode = Encode::create(encode_async);
+    auto filter = Filter::create(decode_async);
+    auto decode = Decode::create(filter_async);
     auto input = Input::create();
 
     combine(combine(combine(combine(input, decode), filter), encode), output);

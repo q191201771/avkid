@@ -53,4 +53,18 @@ class FrameProducer {
     FrameHandlerT frame_handler;
 };
 
+class PacketConsumerInterface {
+  public:
+    virtual ~PacketConsumerInterface() {}
+
+    virtual void do_data(AVPacket *pkt, bool is_audio) = 0;
+};
+
+class FrameConsumerInterface {
+  public:
+    virtual ~FrameConsumerInterface() {}
+
+    virtual void do_data(AVFrame *pkt, bool is_audio) = 0;
+};
+
 }
