@@ -10,17 +10,13 @@
 
 namespace avkid {
 
-template <typename SrcT, typename DstT, typename DataT>
+template <typename DstT, typename DataT>
 class Broadcast {
   public:
-    void set_src(std::shared_ptr<SrcT> src) {
-      src_ = src;
-    }
-
-    void add_listener(std::shared_ptr<DstT> dst) {
+    void add_data_handler(std::shared_ptr<DstT> dst) {
       dst_list_.insert(dst);
     }
-    void del_listener(std::shared_ptr<DstT> dst) {
+    void del_data_handler(std::shared_ptr<DstT> dst) {
       dst_list_.erase(dst);
     }
 
@@ -31,13 +27,10 @@ class Broadcast {
     }
 
   private:
-    std::shared_ptr<SrcT> src_;
     std::unordered_set<std::shared_ptr<DstT> > dst_list_;
 };
 
-typedef Broadcast<Input, PacketConsumerInterface, AVPacket>  InputBroadcast;
-typedef Broadcast<Decode, FrameConsumerInterface, AVFrame>   DecodeBroadcast;
-typedef Broadcast<Filter, FrameConsumerInterface, AVFrame>   FilterBroadcast;
-typedef Broadcast<Encode, PacketConsumerInterface, AVPacket> EncodeBroadcast;
+typedef Broadcast<PacketConsumerInterface, AVPacket> PacketBroadcast;
+typedef Broadcast<FrameConsumerInterface, AVFrame>   FrameBroadcast;
 
 }

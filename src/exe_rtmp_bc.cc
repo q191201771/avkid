@@ -67,17 +67,17 @@ int main(int argc, char **argv) {
 
     auto output = Output::create();
 
-    auto bc = std::make_shared<InputBroadcast>();
+    auto bc = std::make_shared<PacketBroadcast>();
 
     combine(g_input, bc);
 
     // 用于解码后生成jpeg图片
-    bc->add_listener(g_decode);
+    bc->add_data_handler(g_decode);
     //combine(combine(g_decode, g_filter), dump_jpeg);
     combine(g_decode, dump_jpeg);
 
     // 用于录制
-    bc->add_listener(output);
+    bc->add_data_handler(output);
 
     if (!g_input->open(g_in_url)) {
       AVKID_LOG_ERROR << "open " << g_in_url << " failed.\n";

@@ -15,6 +15,7 @@ tmp
 /*.dSYM
 /SECRET.md
 /rtmp2jpeg
+/rtmp_bc
 /rtmp2flv
 /rtmpdump
 /rtmp_decode_encode
