@@ -13,9 +13,11 @@ Filter::Filter(bool async_mode, enum AudioVideoFlag avf)
 }
 
 Filter::~Filter() {
-  do_data(nullptr, true);
-  do_data(nullptr, false);
-  thread_.reset();
+  if (buffersrc_ctx_ && buffersink_ctx_) {
+    do_data(nullptr, true);
+    do_data(nullptr, false);
+    thread_.reset();
+  }
   // TODO free ffmpeg resource
 }
 

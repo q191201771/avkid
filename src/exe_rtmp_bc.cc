@@ -35,7 +35,9 @@ class DumpJpeg : public FrameConsumerInterface {
         HelpOP::dump_mjpeg(frame, jpeg_filename());
       } else {
         AVFrame *dst_frame = HelpOP::scale_video_frame(frame, g_width, g_height);
+        //AVFrame *dst_frame = HelpOP::cut_video_frame(frame, 100, 100, g_width, g_height);
         HelpOP::dump_mjpeg(dst_frame, jpeg_filename());
+        HelpOP::frame_free_prop_unref_buf(&dst_frame);
       }
     }
 };
@@ -44,7 +46,7 @@ int main(int argc, char **argv) {
   uint64_t bt = chef::stuff_op::tick_msec();
   {
     if (argc < 7) {
-      std::cerr << "Usage: " << argv[0] << " <rtmp url> <width:set 0 to copy> <height:set 0 to copy> <num of jpeg> <decode async mode> <filter async mode>\n";
+      std::cerr << "Usage: " << argv[0] << " <rtmp url> <num of jpeg> <width:set 0 to copy> <height:set 0 to copy> <decode async mode> <filter async mode>\n";
       return -1;
     }
 
@@ -71,11 +73,11 @@ int main(int argc, char **argv) {
 
     // 用于解码后生成jpeg图片
     bc->add_listener(g_decode);
-    combine(combine(g_decode, g_filter), dump_jpeg);
+    //combine(combine(g_decode, g_filter), dump_jpeg);
+    combine(g_decode, dump_jpeg);
 
     // 用于录制
     bc->add_listener(output);
-
 
     if (!g_input->open(g_in_url)) {
       AVKID_LOG_ERROR << "open " << g_in_url << " failed.\n";
@@ -83,7 +85,7 @@ int main(int argc, char **argv) {
     }
 
     g_decode->open(g_input->in_fmt_ctx());
-    g_filter->open(g_input->in_fmt_ctx());
+    //g_filter->open(g_input->in_fmt_ctx());
 
     output->open(flv_filename(), g_input->in_fmt_ctx());
 

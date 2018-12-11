@@ -10,16 +10,20 @@ AVFrame *MixOP::video_horizontal(AVFrame *left, AVFrame *right) {
   int dst_height = left->height;
 
   AVFrame *dst = HelpOP::frame_alloc_prop();
-  dst->format = AV_PIX_FMT_YUV420P;
+  dst->format = left->format;
   dst->width = dst_width;
   dst->height = dst_height;
   dst->pts = left->pts; // TODO
   dst->pkt_dts = left->pkt_dts;
   HelpOP::frame_alloc_buf(dst, false);
 
-  memset(dst->data[0], 0, dst_width * dst_height);
-  memset(dst->data[1], 0, dst_width * dst_height / 4);
-  memset(dst->data[2], 0, dst_width * dst_height / 4);
+  //for (int i = 0; i < dst->height; i++) {
+  //  memset(dst->data[0]+dst->linesize[0]*i, 0, dst->linesize[0]);
+  //}
+  //for (int i = 0; i< dst->height/2; i++) {
+  //  memset(dst->data[1]+dst->linesize[1]*i, 0x80, dst->linesize[1]);
+  //  memset(dst->data[2]+dst->linesize[2]*i, 0x80, dst->linesize[2]);
+  //}
 
   HelpOP::mix_video_pin_frame(dst, left, 0, 0);
   HelpOP::mix_video_pin_frame(dst, right, left->width, 0);

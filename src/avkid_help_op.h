@@ -28,12 +28,21 @@ class HelpOP {
                                   int height=-1);
 
   public:
-    static AVFrame *scale_video_frame(AVFrame *frame, int width, int height);
     static bool dump_mjpeg(AVFrame *frame, const std::string &filename);
+
+  public:
+    // 对图形进行缩放
+    static AVFrame *scale_video_frame(AVFrame *src, int width, int height);
+
+    // 截取<frame>图形指定位置、指定大小部分
+    // 简单来说，得到的结果是原始图形的一部分
+    // 注意，如果width和height指定为-1，则截取至原始图形的右下角
+    static AVFrame *cut_video_frame(AVFrame *frame, int x, int y, int width=-1, int height=-1);
 
     // 将<part>绘制到<bg>上，<part>的宽高应小于<bg>的宽高
     // <x>和<y>表示绘制到<bg>上时，从<bg>的哪个坐标开始
-    static bool mix_video_pin_frame(AVFrame *bg, AVFrame *part, int x, int y);
+    // 简单来说，是将<part>的整体作为<bg>的一部分，贴到<bg>上
+    static bool mix_video_pin_frame(AVFrame *bg, AVFrame *part, int bg_x, int bg_y);
 
   public:
     static AVFrame *frame_alloc_prop();

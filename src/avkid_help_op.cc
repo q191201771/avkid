@@ -71,35 +71,80 @@ void HelpOP::serialize_to_extradata(unsigned short sps_len,
   *extradata_size = i;
 }
 
-AVFrame *HelpOP::scale_video_frame(AVFrame *frame, int width, int height) {
-  if (!frame) { return nullptr; }
+AVFrame *HelpOP::cut_video_frame(AVFrame *src, int x, int y, int width, int height) {
+  if (!src) { return nullptr; }
+
+
+  if (x < 0 || y < 0 || x >= src->width || y >= src->height) {
+    return nullptr;
+  }
+
+  if (width == -1) { width = src->width - x; }
+
+  if (height == -1) { height = src->height - y; }
+
+  if (width < 0 || height < 0 ||
+      (x+width) > src->width || (y+height) > src->height
+  ) {
+    return nullptr;
+  }
+
+  AVFrame *dst = av_frame_alloc();
+  dst->width = width;
+  dst->height = height;
+  dst->format = src->format;
+  dst->pts = src->pts;
+  dst->pkt_dts = src->pkt_dts;
+  frame_alloc_buf(dst, false);
+
+  for (int i = 0; i < dst->height; i++) {
+    memcpy(dst->data[0] + dst->linesize[0]*i,
+           src->data[0] + src->linesize[0]*(y+i) + x,
+           dst->linesize[0]);
+  }
+
+  for (int i = 0; i < dst->height/ 2; i++) {
+    memcpy(dst->data[1] + dst->linesize[1]*i,
+           src->data[1] + src->linesize[1]*(y/2+i) + x/2,
+           dst->linesize[1]);
+
+    memcpy(dst->data[2] + dst->linesize[2]*i,
+           src->data[2] + src->linesize[2]*(y/2+i) + x/2,
+           dst->linesize[2]);
+  }
+
+  return dst;
+}
+
+AVFrame *HelpOP::scale_video_frame(AVFrame *src, int width, int height) {
+  if (!src) { return nullptr; }
 
   int iret = -1;
-  AVFrame *dst_frame = av_frame_alloc();
-  dst_frame->width = width;
-  dst_frame->height = height;
-  dst_frame->format = frame->format;
-  dst_frame->pts = frame->pts;
-  dst_frame->pkt_dts = frame->pkt_dts;
-  frame_alloc_buf(dst_frame, false);
+  AVFrame *dst = av_frame_alloc();
+  dst->width = width;
+  dst->height = height;
+  dst->format = src->format;
+  dst->pts = src->pts;
+  dst->pkt_dts = src->pkt_dts;
+  frame_alloc_buf(dst, false);
 
-  //int n = av_image_get_buffer_size((enum AVPixelFormat)frame->format, width, height, 1);
+  //int n = av_image_get_buffer_size((enum AVPixelFormat)src->format, width, height, 1);
   //uint8_t *buf = (uint8_t *)av_malloc(n * sizeof(uint8_t));
-  //AVKID_LOG_DEBUG << "wh:" << dst_frame->width << " " << dst_frame->height << "\n";
+  //AVKID_LOG_DEBUG << "wh:" << dst->width << " " << dst->height << "\n";
 
-  //if ((iret = av_image_fill_arrays(dst_frame->data, dst_frame->linesize, buf, (enum AVPixelFormat)frame->format, width, height, 1)) < 0) {
+  //if ((iret = av_image_fill_arrays(dst->data, dst->linesize, buf, (enum AVPixelFormat)src->format, width, height, 1)) < 0) {
   //  AVKID_LOG_ERROR << "\n";
   //  return nullptr;
   //}
 
-  SwsContext *sws_ctx = sws_getContext(frame->width, frame->height, (enum AVPixelFormat)frame->format,
-                                       width, height, (enum AVPixelFormat)frame->format,
+  SwsContext *sws_ctx = sws_getContext(src->width, src->height, (enum AVPixelFormat)src->format,
+                                       width, height, (enum AVPixelFormat)src->format,
                                        SWS_BICUBIC, nullptr, nullptr, nullptr);
 
-  sws_scale(sws_ctx, (const uint8_t * const*)frame->data, frame->linesize, 0, frame->height, dst_frame->data, dst_frame->linesize);
+  sws_scale(sws_ctx, (const uint8_t * const*)src->data, src->linesize, 0, src->height, dst->data, dst->linesize);
   sws_freeContext(sws_ctx);
 
-  return dst_frame;
+  return dst;
 }
 
 bool HelpOP::dump_mjpeg(AVFrame *frame, const std::string &filename) {
@@ -205,28 +250,28 @@ END:
   return bret;
 }
 
-bool HelpOP::mix_video_pin_frame(AVFrame *bg, AVFrame *part, int x, int y) {
+bool HelpOP::mix_video_pin_frame(AVFrame *bg, AVFrame *part, int bg_x, int bg_y) {
   int bgw = bg->width;
   int bgh = bg->height;
   int ptw = part->width;
   int pth = part->height;
-  if (x < 0 || y < 0 || (x+ptw) > bgw || (y+pth) > bgh) {
+  if (bg_x < 0 || bg_y < 0 || (bg_x+ptw) > bgw || (bg_y+pth) > bgh) {
     AVKID_LOG_ERROR << "\n";
     return false;
   }
 
   for (int i = 0; i < pth; i++) {
-    memcpy(bg->data[0] + bg->linesize[0]*(y+i) + x,
+    memcpy(bg->data[0] + bg->linesize[0]*(bg_y+i) + bg_x,
            part->data[0] + part->linesize[0]*i,
            ptw);
   }
 
   for (int i = 0; i < pth/2; i++) {
-    memcpy(bg->data[1] + bg->linesize[1]*(y/2+i) + x/2,
+    memcpy(bg->data[1] + bg->linesize[1]*(bg_y/2+i) + bg_x/2,
            part->data[1] + part->linesize[1]*i,
            ptw/2);
 
-    memcpy(bg->data[2] + bg->linesize[2]*(y/2+i) + x/2,
+    memcpy(bg->data[2] + bg->linesize[2]*(bg_y/2+i) + bg_x/2,
            part->data[2] + part->linesize[2]*i,
            ptw/2);
   }

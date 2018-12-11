@@ -109,10 +109,27 @@ avkid中各module的输入输出
 1. 结合avkid中的封装
 2. 发送nullptr
 
-#### 其他
+#### FAQ
 
-TODO
+##### Q：为什么在avkid中AVFrame和AVPacket的传递prop全部用了拷贝，而data全部用了ref
 
+A：开销，正确性，业务方自由性
+
+##### Q：为什么在Encode和Output中都需要设置宽高
+
+A：模块化
+
+##### Q：为什么要提供broadcast而不直接把module中的handler弄成数组
+
+A：正确易用性，扩展业务的支持性
+
+##### Q：为什么MixManager不在avkid内部实现
+
+##### Q：对应视频，我有无数种业务需求
+
+A：如果我认为需求足够普遍，那么可能会提供一个HelpOP的函数，如果不是，那么就需要业务方自己操作AVFrame。可通过实现AVFrame到AVFrame的module来接入。
+
+比如cut_video
 
 ### ffmpeg
 
