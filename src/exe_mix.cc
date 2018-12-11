@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <thread>
-#include <deque>
+#include <queue>
 #include "avkid.hpp"
 
 using namespace avkid;
@@ -12,12 +12,12 @@ class MixManager : public FrameProducer {
         frame_handler(frame, is_audio);
         //AVKID_LOG_FRAME(frame, is_audio);
 
-        //if (right_audio_deque_.empty()) {
+        //if (right_audio_queue_.empty()) {
         //  AVFrame *rframe = HelpOP::frame_alloc_copy_prop_ref_buf(frame);
-        //  left_audio_deque_.push_back(rframe);
+        //  left_audio_queue_.push_back(rframe);
         //} else {
-        //  AVFrame *pair_frame = right_audio_deque_.front();
-        //  right_audio_deque_.pop_front();
+        //  AVFrame *pair_frame = right_audio_queue_.front();
+        //  right_audio_queue_.pop_front();
         //  AVFrame *dst = MixOP::audio(frame, pair_frame);
 
         //  frame_handler(dst, is_audio);
@@ -28,12 +28,12 @@ class MixManager : public FrameProducer {
         return;
       }
 
-      if (right_video_deque_.empty()) {
+      if (right_video_queue_.empty()) {
         AVFrame *rframe = HelpOP::frame_alloc_copy_prop_ref_buf(frame);
-        left_video_deque_.push_back(rframe);
+        left_video_queue_.push(rframe);
       } else {
-        AVFrame *pair_frame = right_video_deque_.front();
-        right_video_deque_.pop_front();
+        AVFrame *pair_frame = right_video_queue_.front();
+        right_video_queue_.pop();
         AVFrame *dst = MixOP::video_horizontal(frame, pair_frame);
 
         frame_handler(dst, is_audio);
@@ -60,12 +60,12 @@ class MixManager : public FrameProducer {
         return;
       }
 
-      if (left_video_deque_.empty()) {
+      if (left_video_queue_.empty()) {
         AVFrame *rframe = HelpOP::frame_alloc_copy_prop_ref_buf(frame);
-        right_video_deque_.push_back(rframe);
+        right_video_queue_.push(rframe);
       } else {
-        AVFrame *pair_frame = left_video_deque_.front();
-        left_video_deque_.pop_front();
+        AVFrame *pair_frame = left_video_queue_.front();
+        left_video_queue_.pop();
         AVFrame *dst = MixOP::video_horizontal(pair_frame, frame);
 
         frame_handler(dst, is_audio);
@@ -75,10 +75,10 @@ class MixManager : public FrameProducer {
     }
 
   private:
-    std::deque<AVFrame *> left_video_deque_;
-    std::deque<AVFrame *> right_video_deque_;
-    std::deque<AVFrame *> left_audio_deque_;
-    std::deque<AVFrame *> right_audio_deque_;
+    std::queue<AVFrame *> left_video_queue_;
+    std::queue<AVFrame *> right_video_queue_;
+    std::queue<AVFrame *> left_audio_queue_;
+    std::queue<AVFrame *> right_audio_queue_;
 
 };
 

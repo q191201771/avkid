@@ -3,6 +3,8 @@
 *.log
 *.mp4
 *.flv
+*.m3u8
+*.ts
 *.jpeg
 tmp
 

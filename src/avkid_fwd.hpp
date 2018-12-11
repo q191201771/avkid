@@ -31,7 +31,7 @@ extern "C" {
 
 #include "chef_snippet.hpp"
 #include "chef_task_thread.hpp"
-
+#include "chef_strings_op.hpp"
 
 namespace avkid {
   typedef std::function<void(AVPacket *, bool)> PacketHandlerT;

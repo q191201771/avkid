@@ -41,8 +41,6 @@ class HelpOP {
     static AVFrame *frame_alloc_copy_prop_ref_buf(AVFrame *frame);
     static void frame_free_prop_unref_buf(AVFrame **frame);
     static void frame_unref_buf(AVFrame *frame);
-    // TODO
-    //static AVFrame *frame_alloc_copy_prop(AVFrame *fram);
 
     static AVPacket *packet_alloc_prop_ref_buf(AVPacket *packet);
     static void packet_free_prop_unref_buf(AVPacket **packet);

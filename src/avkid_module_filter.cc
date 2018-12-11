@@ -22,7 +22,7 @@ Filter::~Filter() {
 bool Filter::open(AVFormatContext *in_fmt_ctx) {
   int iret = -1;
 
-  // TODO to interface param
+  // TODO filter_descr通过open函数参数传入
   //const char *filter_descr = "drawtext=\"text='Test Text'\"";
   //const char *filter_descr = "boxblur=2:1:cr=0:ar=0";
   // 画一个框

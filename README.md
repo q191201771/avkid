@@ -1,6 +1,6 @@
 # avkid
 
-基于ffmpeg的小型框架，目前聚焦于直播相关的业务（截图、录播、转码、合流等）。
+近期学期ffmpeg，基于ffmpeg实现的小型框架，目前聚焦于直播相关的业务（截图、录播、转码、转推、合流、视频效果处理等）。
 
 ### 特性
 
@@ -13,6 +13,7 @@
 * 所有module支持音视频单独控制
 * 支持设置时长
 * 支持超时
+* 输入输出支持 http-flv 和 rtmp （其他格式待测试）
 
 ### avkid的源码文件结构图
 
@@ -55,13 +56,13 @@ avkid中各module的输入输出
 
 ##### 1. 录制
 
-不需要编解码，展示一个最简单应用需要的代码
+不需要编解码，演示一个最简单应用需要的代码
 
 ![image](./doc/rtmpdump.png)
 
 ##### 2. 截图
 
-展示如何combine用户自己实现的module
+演示如何combine用户自己实现的module
 
 图省略，简单看下代码。
 
@@ -115,6 +116,10 @@ http://ffmpeg.org/documentation.html
 #### avfilter 介绍
 
 #### pts dts
+
+#### AVFrame 和 原始内存块互相转换
+
+#### planar packed
 
 ### 我的环境
 

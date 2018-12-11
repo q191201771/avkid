@@ -81,15 +81,16 @@ AVFrame *HelpOP::scale_video_frame(AVFrame *frame, int width, int height) {
   dst_frame->format = frame->format;
   dst_frame->pts = frame->pts;
   dst_frame->pkt_dts = frame->pkt_dts;
-  int n = av_image_get_buffer_size((enum AVPixelFormat)frame->format, width, height, 1);
-  uint8_t *buf = (uint8_t *)av_malloc(n * sizeof(uint8_t));
-  AVKID_LOG_DEBUG << "wh:" << dst_frame->width << " " << dst_frame->height << "\n";
+  frame_alloc_buf(dst_frame, false);
 
-  if ((iret = av_image_fill_arrays(dst_frame->data, dst_frame->linesize, buf, (enum AVPixelFormat)frame->format, width, height, 1)) < 0) {
-    AVKID_LOG_ERROR << "\n";
-    return nullptr;
-  }
-  AVKID_LOG_DEBUG << "wh:" << dst_frame->width << " " << dst_frame->height << "\n";
+  //int n = av_image_get_buffer_size((enum AVPixelFormat)frame->format, width, height, 1);
+  //uint8_t *buf = (uint8_t *)av_malloc(n * sizeof(uint8_t));
+  //AVKID_LOG_DEBUG << "wh:" << dst_frame->width << " " << dst_frame->height << "\n";
+
+  //if ((iret = av_image_fill_arrays(dst_frame->data, dst_frame->linesize, buf, (enum AVPixelFormat)frame->format, width, height, 1)) < 0) {
+  //  AVKID_LOG_ERROR << "\n";
+  //  return nullptr;
+  //}
 
   SwsContext *sws_ctx = sws_getContext(frame->width, frame->height, (enum AVPixelFormat)frame->format,
                                        width, height, (enum AVPixelFormat)frame->format,

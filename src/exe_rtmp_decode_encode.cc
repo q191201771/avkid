@@ -30,6 +30,7 @@ int main(int argc, char **argv) {
     auto input = Input::create();
 
     combine(combine(combine(combine(input, decode), filter), encode), output);
+    //combine(combine(combine(input, decode), encode), output);
 
     if (!input->open(in)) {
       AVKID_LOG_ERROR << "Open " << in << " failed.\n";

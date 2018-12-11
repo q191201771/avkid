@@ -25,7 +25,14 @@ Output::~Output() {
 bool Output::open(const std::string &url, AVFormatContext *in_fmt_ctx, int width, int height) {
   int iret = -1;
 
-  avformat_alloc_output_context2(&out_fmt_ctx_, nullptr, nullptr, url.c_str());
+  std::string format_name;
+
+  if ((chef::strings_op::has_prefix(url, "http://") && chef::strings_op::has_suffix(url, ".flv")) ||
+      chef::strings_op::has_prefix(url, "rtmp://")
+  ) {
+    format_name = "flv";
+  }
+  avformat_alloc_output_context2(&out_fmt_ctx_, nullptr, format_name.empty() ? nullptr : format_name.c_str(), url.c_str());
   if (!out_fmt_ctx_) { return false; }
 
   int stream_index = 0;
