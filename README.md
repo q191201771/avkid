@@ -68,11 +68,9 @@ avkid中各module的输入输出
 
 演示如何combine用户自己实现的module，以及如果利用Broadcast将一个module和多个module进行挂载。
 
-拉一路流，即截图又录制。
+拉一路流，即截图又录制。那么想象一下，我们可以十分方便的做多路码流转码
 
 ![image](./doc/bc.png)
-
-链式combine
 
 ##### 3. 将视频转化成黑白，上下或左右翻转（还没尝试的打水印、高斯处理等等）
 
@@ -80,13 +78,17 @@ avkid中各module的输入输出
 
 图省略，简单看下代码。
 
+演示通过desc参数做各种视频效果
+
 基于avkid模块化可插拔的特性，我们可以在任意环节对AVFrame做filter操作。比如录制黑白视频或截黑白的图片。
 
 实际上，AVFrame可玩的花样很多，而且可以是链式的。
 
+链式combine的好处
+
 ##### 4. 合流
 
-演示如何更自由的组合avkid module，以及插入业务方的处理逻辑
+演示如何更自由的组合avkid module，以及业务方如何插入自己的处理逻辑
 
 ![image](./doc/mix.png)
 

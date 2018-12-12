@@ -13,28 +13,16 @@ Filter::Filter(bool async_mode, enum AudioVideoFlag avf)
 }
 
 Filter::~Filter() {
-  if (buffersrc_ctx_ && buffersink_ctx_) {
+  if (buffersrc_ctx_ && buffersink_ctx_ && filter_graph_) {
     do_data(nullptr, true);
     do_data(nullptr, false);
     thread_.reset();
+    avfilter_graph_free(&filter_graph_);
   }
-  // TODO free ffmpeg resource
 }
 
-bool Filter::open(AVFormatContext *in_fmt_ctx) {
+bool Filter::open(AVFormatContext *in_fmt_ctx, const char *filter_descr) {
   int iret = -1;
-
-  // TODO filter_descr通过open函数参数传入
-  //const char *filter_descr = "drawtext=\"text='Test Text'\"";
-  //const char *filter_descr = "boxblur=2:1:cr=0:ar=0";
-  // 画一个框
-  //const char *filter_descr = "drawbox=x=10:y=20:w=200:h=60:color=red@0.5";
-  // 控制yuv值，类似黑白效果？
-  const char *filter_descr = "lutyuv='u=128:v=128'";
-  // 左右翻转
-  //const char *filter_descr = "hflip";
-  // 上下翻转
-  //const char *filter_descr = "vflip";
 
   bool has_video = false;
   int width, height;
@@ -62,8 +50,8 @@ bool Filter::open(AVFormatContext *in_fmt_ctx) {
   const AVFilter *buffersink = avfilter_get_by_name("buffersink");
   AVFilterInOut *outputs = avfilter_inout_alloc();
   AVFilterInOut *inputs = avfilter_inout_alloc();
-  AVFilterGraph *filter_graph = avfilter_graph_alloc();
-  if (!outputs || !inputs || !filter_graph) { return false; }
+  filter_graph_ = avfilter_graph_alloc();
+  if (!outputs || !inputs || !filter_graph_) { return false; }
 
   char args[512] = {0};
   snprintf(args, sizeof(args)-1,
@@ -71,12 +59,12 @@ bool Filter::open(AVFormatContext *in_fmt_ctx) {
            width, height, pix_fmt, time_base.num, time_base.den, sar.num, sar.den);
   AVKID_LOG_DEBUG << args << "\n";
 
-  if ((iret = avfilter_graph_create_filter(&buffersrc_ctx_, buffersrc, "in", args, nullptr, filter_graph)) < 0) {
+  if ((iret = avfilter_graph_create_filter(&buffersrc_ctx_, buffersrc, "in", args, nullptr, filter_graph_)) < 0) {
     AVKID_LOG_FFMPEG_ERROR(iret);
     return false;
   }
 
-  if ((iret = avfilter_graph_create_filter(&buffersink_ctx_, buffersink, "out", nullptr, nullptr, filter_graph)) < 0) {
+  if ((iret = avfilter_graph_create_filter(&buffersink_ctx_, buffersink, "out", nullptr, nullptr, filter_graph_)) < 0) {
     AVKID_LOG_FFMPEG_ERROR(iret);
     return false;
   }
@@ -97,12 +85,12 @@ bool Filter::open(AVFormatContext *in_fmt_ctx) {
   inputs->pad_idx = 0;
   inputs->next = nullptr;
 
-  if ((iret = avfilter_graph_parse_ptr(filter_graph, filter_descr, &inputs, &outputs, nullptr)) < 0) {
+  if ((iret = avfilter_graph_parse_ptr(filter_graph_, filter_descr, &inputs, &outputs, nullptr)) < 0) {
     AVKID_LOG_FFMPEG_ERROR(iret);
     return false;
   }
 
-  if ((iret = avfilter_graph_config(filter_graph, nullptr)) < 0) {
+  if ((iret = avfilter_graph_config(filter_graph_, nullptr)) < 0) {
     AVKID_LOG_FFMPEG_ERROR(iret);
     return false;
   }

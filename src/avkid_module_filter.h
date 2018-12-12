@@ -18,6 +18,7 @@ class Filter : public ModuleBase, public FrameConsumerInterface, public FramePro
     static std::shared_ptr<Filter> create(bool async_mode=false, enum AudioVideoFlag avf=AVF_BOTH);
 
     bool open(AVFormatContext *in_fmt_ctx);
+    bool open(AVFormatContext *in_fmt_ctx, const char *filter_descr);
 
     virtual void do_data(AVFrame *frame, bool is_audio);
 
@@ -27,6 +28,8 @@ class Filter : public ModuleBase, public FrameConsumerInterface, public FramePro
   private:
     AVFilterContext *buffersrc_ctx_ = nullptr;
     AVFilterContext *buffersink_ctx_ = nullptr;
+
+    AVFilterGraph *filter_graph_ = nullptr;
 
   private:
     Filter(const Filter &) = delete;

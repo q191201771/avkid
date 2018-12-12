@@ -28,6 +28,12 @@ class Broadcast {
 
   private:
     std::unordered_set<std::shared_ptr<DstT> > dst_list_;
+
+  public:
+    Broadcast() {}
+  private:
+    Broadcast(const Broadcast &) = delete;
+    Broadcast operator=(const Broadcast &) = delete;
 };
 
 typedef Broadcast<PacketConsumerInterface, AVPacket> PacketBroadcast;

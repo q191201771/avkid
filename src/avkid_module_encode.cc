@@ -16,6 +16,8 @@ Encode::~Encode() {
   do_data(nullptr, true);
   do_data(nullptr, false);
   thread_.reset();
+  if (audio_enc_ctx_) { avcodec_free_context(&audio_enc_ctx_); }
+  if (video_enc_ctx_) { avcodec_free_context(&video_enc_ctx_); }
 }
 
 bool Encode::open(AVFormatContext *in_fmt_ctx, int width, int height) {

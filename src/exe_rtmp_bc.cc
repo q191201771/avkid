@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
 
     // 用于解码后生成jpeg图片
     bc->add_data_handler(g_decode);
-    //combine(combine(g_decode, g_filter), dump_jpeg);
+    //combine(g_decode, g_filter, dump_jpeg);
     combine(g_decode, dump_jpeg);
 
     // 用于录制

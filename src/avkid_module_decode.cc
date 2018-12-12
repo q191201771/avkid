@@ -16,8 +16,8 @@ Decode::~Decode() {
   do_data(nullptr, true);
   do_data(nullptr, false);
   thread_.reset();
-  avcodec_free_context(&audio_dec_ctx_);
-  avcodec_free_context(&video_dec_ctx_);
+  if (audio_dec_ctx_) { avcodec_free_context(&audio_dec_ctx_); }
+  if (video_dec_ctx_) { avcodec_free_context(&video_dec_ctx_); }
 }
 
 bool Decode::open(AVFormatContext *in_fmt_ctx) {

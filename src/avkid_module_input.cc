@@ -13,7 +13,7 @@ Input::Input(enum AudioVideoFlag avf)
 }
 
 Input::~Input() {
-  avformat_close_input(&in_fmt_ctx_);
+  if (in_fmt_ctx_) { avformat_close_input(&in_fmt_ctx_); }
 }
 
 bool Input::open(const std::string &url, uint32_t timeout_msec) {

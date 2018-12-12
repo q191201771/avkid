@@ -124,7 +124,7 @@ int main(int argc, char **argv) {
     combine(right_input, right_decode);
     AVKID_COMBINE_MODULE_CC(right_decode, mm, &MixManager::right_frame_cb);
 
-    combine(combine(mm, encode), output);
+    combine(mm, encode, output);
 
     std::thread t1([&]{
       left_input->read(duration * 1000);
