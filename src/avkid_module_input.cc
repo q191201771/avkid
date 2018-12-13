@@ -34,7 +34,8 @@ bool Input::open(const std::string &url, uint32_t timeout_msec) {
     AVStream *stream = in_fmt_ctx_->streams[i];
     AVCodecParameters *codecpar = stream->codecpar;
 
-    if (codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+    if (codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
+    } else if (codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
       video_width_ = codecpar->width;
       video_height_ = codecpar->height;
     }
@@ -61,7 +62,7 @@ bool Input::read(uint32_t duration_ms) {
       audio_duration_ = pkt.pts - first_audio_pts_;
       pkt.pts -= first_audio_pts_;
       pkt.dts -= first_audio_dts_;
-    } else {
+    } else if (ct == AVMEDIA_TYPE_VIDEO){
       if (first_video_pts_ == -1) { first_video_pts_ = pkt.pts; }
       if (first_video_dts_ == -1) { first_video_dts_ = pkt.dts; }
 

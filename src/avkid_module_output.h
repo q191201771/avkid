@@ -29,8 +29,10 @@ class Output : public ModuleBase, public PacketConsumerInterface {
     AVFormatContext *out_fmt_ctx_ = nullptr;
     int in_audio_stream_index_ = -1;
     int in_video_stream_index_ = -1;
-    //AVStream *out_audio_stream_ = nullptr;
-    //AVStream *out_video_stream_ = nullptr;
+    AVRational in_audio_time_base_;
+    AVRational in_video_time_base_;
+    AVStream *out_audio_stream_ = nullptr;
+    AVStream *out_video_stream_ = nullptr;
 
   private:
     Output(const Output &) = delete;

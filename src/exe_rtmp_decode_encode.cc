@@ -41,8 +41,8 @@ int main(int argc, char **argv) {
     //const char *filter_descr = "vflip";
 
 
-    //combine(input, decode, encode, output);
-    combine(input, decode, filter, encode, output);
+    combine(input, decode, encode, output);
+    //combine(input, decode, filter, encode, output);
 
     if (!input->open(in)) {
       AVKID_LOG_ERROR << "Open " << in << " failed.\n";

@@ -1,6 +1,6 @@
 # avkid
 
-近期学习ffmpeg，基于ffmpeg实现的小型框架，目前聚焦于直播相关的业务（截图、录播、转码、转推、合流、视频效果处理等）。
+avakid是我近期学习ffmpeg，在ffmpeg之上实现的小型框架。目前聚焦于直播相关的业务（截图、录播、切片、转码、转推、合流、视频效果处理等）。
 
 ### 特性
 
@@ -13,7 +13,7 @@
 * 所有module支持音视频单独控制
 * 支持设置时长
 * 支持超时
-* 输入输出支持 http-flv 和 rtmp （其他格式待测试）
+* 输入输出支持 http-flv / rtmp / mp4 / m3u8 （其他格式待测试）
 
 ### avkid的源码文件结构图
 
@@ -56,7 +56,7 @@ avkid中各module的输入输出
 
 ![image](./doc/module_interface.png)
 
-#### 构建应用
+#### 构建演示应用
 
 ##### 1. 录制
 
@@ -64,11 +64,11 @@ avkid中各module的输入输出
 
 ![image](./doc/rtmpdump.png)
 
-##### 2. 截图
+##### 2. 一进多出
 
 演示如何combine用户自己实现的module，以及如果利用Broadcast将一个module和多个module进行挂载。
 
-拉一路流，即截图又录制。那么想象一下，我们可以十分方便的做多路码流转码
+拉一路流，截图，并分别录制flv，mp4，m3u8三份文件。那么想象一下，我们可以十分方便的做多路码流转码
 
 ![image](./doc/bc.png)
 
@@ -146,6 +146,17 @@ http://ffmpeg.org/documentation.html
 #### AVFrame 和 原始内存块互相转换
 
 #### planar packed
+
+#### 冗余初始化，，
+
+```
+AVPacket pkt = {0};
+
+AVPacket pkt;
+av_init_packet(&pkt);
+
+AVPacket *pkt = av_packet_alloc();
+```
 
 ### 我的环境
 

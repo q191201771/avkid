@@ -22,7 +22,7 @@
 if (packet) { \
   std::ostringstream oss; \
 oss << "Packet " << (is_audio ? "A" : "V") << " size:" << (packet)->size; \
-oss << " pts:" << (packet)->pts << " dts:" << (packet)->dts << " duration:" << (packet)->duration; \
+oss << " pts:" << av_ts2str((packet)->pts) << " dts:" << av_ts2str((packet)->dts) << " duration:" << (packet)->duration; \
   AVKID_LOG_INFO << oss.str() << "\n"; \
 }
 
@@ -30,7 +30,7 @@ oss << " pts:" << (packet)->pts << " dts:" << (packet)->dts << " duration:" << (
 if (frame) { \
   std::ostringstream oss; \
 oss << "Frame " << (is_audio ? "A" : "V") << " linesize:(" << (frame)->linesize[0] << " " << (frame)->linesize[1] << " " << (frame)->linesize[2] << ")"; \
-oss << " pts:" << (frame)->pts << " dts:" << (frame)->pkt_dts << " duration:" << (frame)->pkt_duration; \
+oss << " pts:" << av_ts2str((frame)->pts) << " dts:" << av_ts2str((frame)->pkt_dts) << " duration:" << (frame)->pkt_duration; \
 oss << " format:" << av_get_sample_fmt_name((enum AVSampleFormat)(frame)->format); \
   if (is_audio) { \
 oss << " nb_samples:" << (frame)->nb_samples << " sample_rate:" << (frame)->sample_rate << " channel_layout:" << (frame)->channel_layout; \

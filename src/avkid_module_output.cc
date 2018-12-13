@@ -35,9 +35,6 @@ bool Output::open(const std::string &url, AVFormatContext *in_fmt_ctx, int width
   ) {
     format_name = "flv";
   }
-  if ((chef::strings_op::has_suffix(url, ".mp4"))) {
-    format_name = "mpeg";
-  }
 
   avformat_alloc_output_context2(&out_fmt_ctx_, nullptr, format_name.empty() ? nullptr : format_name.c_str(), url.c_str());
   if (!out_fmt_ctx_) { return false; }
@@ -64,12 +61,14 @@ bool Output::open(const std::string &url, AVFormatContext *in_fmt_ctx, int width
       if (in_codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
         in_audio_stream_index_ = stream_index++;
 
-        //out_audio_stream_ = out_stream;
+        out_audio_stream_ = out_stream;
+        in_audio_time_base_ = in_stream->time_base;
       }
       if (in_codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
         in_video_stream_index_ = stream_index++;
 
-        //out_video_stream_ = out_stream;
+        out_video_stream_ = out_stream;
+        in_video_time_base_ = in_stream->time_base;
 
         if (width != -1 && height != -1) {
           out_stream->codecpar->width = width;
@@ -101,8 +100,27 @@ bool Output::do_packet_(AVPacket *pkt, bool is_audio) {
   int iret = -1;
 
   pkt->stream_index = is_audio ? in_audio_stream_index_ : in_video_stream_index_;
+  AVStream *out_stream = is_audio ? out_audio_stream_ : out_video_stream_;
+  AVRational in_time_base = is_audio ? in_audio_time_base_ : in_video_time_base_;
+  AVRational out_time_base = out_stream->time_base;
+
+  if (!is_audio && ((*(pkt->data+4) & AVKID_H264_NAL_UNIT_TYPE_MASK) == AVKID_H264_NAL_UNIT_TYPE_SEI)) {
+    AVKID_LOG_INFO << "Drop SEI.\n";
+    return true;
+  }
+
+  pkt->pts = av_rescale_q_rnd(pkt->pts, in_time_base, out_time_base, (enum AVRounding)(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+  pkt->dts = av_rescale_q_rnd(pkt->dts, in_time_base, out_time_base, (enum AVRounding)(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+  pkt->duration = av_rescale_q(pkt->duration, in_time_base, out_time_base);
 
   //AVKID_LOG_PACKET(pkt, is_audio);
+  //AVKID_LOG_INFO << "CHEFERASEME "
+  //               << av_ts2str(pkt->pts) << " " << av_ts2timestr(pkt->pts, &out_stream->time_base)
+  //               << " " << av_ts2str(pkt->dts) << " " << av_ts2timestr(pkt->dts, &out_stream->time_base)
+  //               << " out_stream(" << out_stream->time_base.num << " " << out_stream->time_base.den << ")"
+  //               << " in_audio_tb(" << in_audio_time_base_.num << " " << in_audio_time_base_.den << ")"
+  //               << " in_video_tb(" << in_video_time_base_.num << " " << in_video_time_base_.den << ")"
+  //               << "\n";
 
   if ((iret = av_interleaved_write_frame(out_fmt_ctx_, pkt)) < 0) {
     AVKID_LOG_FFMPEG_ERROR(iret);
