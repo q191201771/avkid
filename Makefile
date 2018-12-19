@@ -1,5 +1,5 @@
 CXXFLAGS = -g -O2 -std=c++11 -pipe -fPIC -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS # -Wall
-CXXFLAGS += -I./avkid/include -I./avkid/include/chef_base
+CXXFLAGS += -I./avkid/include
 
 LINKFLAGS = -lavformat -lavcodec -lavutil -lavfilter -lswscale -lfdk-aac
 
