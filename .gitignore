@@ -8,6 +8,7 @@
 *.jpeg
 tmp
 
+/output
 /FFmpeg
 /resource
 /.invisible

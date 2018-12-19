@@ -1,47 +1,38 @@
-CXX = g++
 CXXFLAGS = -g -O2 -std=c++11 -pipe -fPIC -D__STDC_FORMAT_MACROS -D__STDC_CONSTANT_MACROS # -Wall
+CXXFLAGS += -I./avkid/include -I./avkid/include/chef_base
 
 LINKFLAGS = -lavformat -lavcodec -lavutil -lavfilter -lswscale -lfdk-aac
 
-all: rtmp_bc rtmpdump rtmp_decode_encode mix tag_nalus
+all: libavkid rtmp_bc rtmpdump rtmp_decode_encode mix
 
-COMMON_HEADER = $(wildcard src/*.h)
-COMMON_HEADER += $(wildcard src/*.hpp)
+AVKID_HEADER = $(wildcard avkid/include/*.h)
+AVKID_HEADER += $(wildcard avkid/include/*.hpp)
+AVKID_HEADER += $(wildcard avkid/include/chef_base/*.hpp)
 
-COMMON_SRC = \
-	src/avkid_module_base.cc \
-	src/avkid_module_input.cc \
-	src/avkid_module_decode.cc \
-	src/avkid_module_filter.cc \
-	src/avkid_module_encode.cc \
-	src/avkid_module_output.cc \
-	src/avkid_mix_op.cc \
-	src/avkid_help_op.cc
+AVKID_SRC = $(wildcard avkid/src/*.cc)
 
-RTMP_BC_SRC = src/exe_rtmp_bc.cc $(COMMON_SRC)
-RTMPDUMP_SRC = src/exe_rtmpdump.cc $(COMMON_SRC)
-RTMP_DECODE_ENCODE_SRC = src/exe_rtmp_decode_encode.cc $(COMMON_SRC)
-MIX_SRC = src/exe_mix.cc $(COMMON_SRC)
-TAG_NALUS_SRC = src/exe_tag_nalus.cc
+AVKID_OBJ = $(addprefix output/, $(patsubst %.cc,%.o,$(AVKID_SRC)))
 
-rtmp_bc: $(RTMP_BC_SRC) $(COMMON_HEADER) $(COMMON_SRC)
-	$(CXX) $(CXXFLAGS) -o rtmp_bc $(RTMP_BC_SRC) $(LINKFLAGS)
+output/avkid/src/%.o: avkid/src/%.cc $(AVKID_HEADER)
+	@mkdir -p $(dir $@)
+	g++ $(CXXFLAGS) -c $< -o $@
 
-rtmpdump: $(RTMPDUMP_SRC) $(COMMON_HEADER) $(COMMON_SRC)
-	$(CXX) $(CXXFLAGS) -o rtmpdump $(RTMPDUMP_SRC) $(LINKFLAGS)
+libavkid: $(AVKID_OBJ)
+	@mkdir -p $(dir $@)
+	ar -cr output/libavkid.a $(AVKID_OBJ)
 
-rtmp_decode_encode: $(RTMP_DECODE_ENCODE_SRC) $(COMMON_HEADER) $(COMMON_SRC)
-	$(CXX) $(CXXFLAGS) -o rtmp_decode_encode $(RTMP_DECODE_ENCODE_SRC) $(LINKFLAGS)
+rtmp_bc: avkid/example/exe_rtmp_bc.cc libavkid
+	g++ $(CXXFLAGS) -o output/rtmp_bc avkid/example/exe_rtmp_bc.cc output/libavkid.a $(LINKFLAGS)
 
-mix: $(MIX_SRC) $(COMMON_HEADER) $(COMMON_SRC)
-	$(CXX) $(CXXFLAGS) -o mix $(MIX_SRC) $(LINKFLAGS)
+rtmpdump: avkid/example/exe_rtmpdump.cc libavkid
+	g++ $(CXXFLAGS) -o output/rtmpdump avkid/example/exe_rtmpdump.cc output/libavkid.a $(LINKFLAGS)
 
-tag_nalus: $(TAG_NALUS_SRC) $(COMMO_HEADER)
-	$(CXX) $(CXXFLAGS) -o tag_nalus $(TAG_NALUS_SRC) $(LINKFLAGS)
+rtmp_decode_encode: avkid/example/exe_rtmp_decode_encode.cc libavkid
+	g++ $(CXXFLAGS) -o output/rtmp_decode_encode avkid/example/exe_rtmp_decode_encode.cc output/libavkid.a $(LINKFLAGS)
 
-tail:
-	rm -rf *.dSYM
+mix: avkid/example/exe_mix.cc libavkid
+	g++ $(CXXFLAGS) -o output/mix avkid/example/exe_mix.cc output/libavkid.a $(LINKFLAGS)
 
 clean:
-	rm -rf rtmp_bc rtmpdump rtmp_decode_encode mix tag_nalus
+	rm -rf output
 
