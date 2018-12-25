@@ -191,7 +191,7 @@ bool HelpOP::dump_mjpeg(AVFrame *frame, const std::string &filename) {
   cc->pix_fmt = AV_PIX_FMT_YUVJ420P;
   cc->width = frame->width;
   cc->height = frame->height;
-  cc->flags |= CODEC_FLAG_QSCALE;
+  cc->flags |= AV_CODEC_FLAG_QSCALE;
   cc->global_quality = FF_QP2LAMBDA * 1;
 
   stream->time_base = (AVRational){1, 25};
