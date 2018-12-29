@@ -53,25 +53,26 @@ bool Input::read(uint32_t duration_ms) {
   AVPacket pkt = {0};
 
   while (!stop_read_flag_ && av_read_frame(in_fmt_ctx_, &pkt) >= 0) {
-    int ct = in_fmt_ctx_->streams[pkt.stream_index]->codecpar->codec_type;
+    AVStream *stream = in_fmt_ctx_->streams[pkt.stream_index];
+    int ct = stream->codecpar->codec_type;
 
     if (ct == AVMEDIA_TYPE_AUDIO) {
       if (first_audio_pts_ == -1) { first_audio_pts_ = pkt.pts; }
       if (first_audio_dts_ == -1) { first_audio_dts_ = pkt.dts; }
 
-      audio_duration_ = pkt.pts - first_audio_pts_;
+      audio_duration_ms_ = 1000.0f * stream->time_base.num / stream->time_base.den * (pkt.pts - first_audio_pts_);
       pkt.pts -= first_audio_pts_;
       pkt.dts -= first_audio_dts_;
     } else if (ct == AVMEDIA_TYPE_VIDEO){
       if (first_video_pts_ == -1) { first_video_pts_ = pkt.pts; }
       if (first_video_dts_ == -1) { first_video_dts_ = pkt.dts; }
 
-      video_duration_ = pkt.pts - first_video_pts_;
+      video_duration_ms_ = 1000.0f * stream->time_base.num / stream->time_base.den * (pkt.pts - first_video_pts_);
       pkt.pts -= first_video_pts_;
       pkt.dts -= first_video_dts_;
     }
 
-    if (duration_ms != 0 && audio_duration_ > duration_ms && video_duration_ > duration_ms) {
+    if (duration_ms != 0 && (audio_duration_ms_ > duration_ms) && (video_duration_ms_ > duration_ms)) {
       stop_read_flag_ = true;
     }
 
