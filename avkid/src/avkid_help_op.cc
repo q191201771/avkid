@@ -3,8 +3,10 @@
 
 namespace avkid {
 
-void HelpOP::global_init_ffmpeg() {
-  av_log_set_level(AV_LOG_DEBUG);
+void HelpOP::global_init_ffmpeg(bool open_debug_log) {
+  if (open_debug_log) {
+    av_log_set_level(AV_LOG_DEBUG);
+  }
 
   av_register_all();
   avformat_network_init();
@@ -127,15 +129,6 @@ AVFrame *HelpOP::scale_video_frame(AVFrame *src, int width, int height) {
   dst->pts = src->pts;
   dst->pkt_dts = src->pkt_dts;
   frame_alloc_buf(dst, false);
-
-  //int n = av_image_get_buffer_size((enum AVPixelFormat)src->format, width, height, 1);
-  //uint8_t *buf = (uint8_t *)av_malloc(n * sizeof(uint8_t));
-  //AVKID_LOG_DEBUG << "wh:" << dst->width << " " << dst->height << "\n";
-
-  //if ((iret = av_image_fill_arrays(dst->data, dst->linesize, buf, (enum AVPixelFormat)src->format, width, height, 1)) < 0) {
-  //  AVKID_LOG_ERROR << "\n";
-  //  return nullptr;
-  //}
 
   SwsContext *sws_ctx = sws_getContext(src->width, src->height, (enum AVPixelFormat)src->format,
                                        width, height, (enum AVPixelFormat)src->format,

@@ -12,7 +12,7 @@ namespace avkid {
 
 class HelpOP {
   public:
-    static void global_init_ffmpeg();
+    static void global_init_ffmpeg(bool open_debug_log=true);
     static void global_deinit_ffmpeg();
     static std::string av_make_error_string(int errnum);
     static std::string stringify_ffmpeg_error(int err);

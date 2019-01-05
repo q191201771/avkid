@@ -52,7 +52,17 @@ bool Input::read(uint32_t duration_ms) {
 
   AVPacket pkt = {0};
 
-  while (!stop_read_flag_ && av_read_frame(in_fmt_ctx_, &pkt) >= 0) {
+  //while (!stop_read_flag_ && av_read_frame(in_fmt_ctx_, &pkt) >= 0) {
+  while (!stop_read_flag_) {
+    int iret = av_read_frame(in_fmt_ctx_, &pkt);
+    if (iret < 0) {
+      if (iret == AVERROR_EOF) {
+        return true;
+      } else {
+        AVKID_LOG_FFMPEG_ERROR(iret);
+        return false;
+      }
+    }
     AVStream *stream = in_fmt_ctx_->streams[pkt.stream_index];
     int ct = stream->codecpar->codec_type;
 

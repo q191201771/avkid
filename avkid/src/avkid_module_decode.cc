@@ -13,8 +13,9 @@ Decode::Decode(bool async_mode, enum AudioVideoFlag avf)
 }
 
 Decode::~Decode() {
-  do_data(nullptr, true);
-  do_data(nullptr, false);
+  if (audio_dec_ctx_) { do_data(nullptr, true); }
+  if (video_dec_ctx_) { do_data(nullptr, false); }
+
   thread_.reset();
   if (audio_dec_ctx_) { avcodec_free_context(&audio_dec_ctx_); }
   if (video_dec_ctx_) { avcodec_free_context(&video_dec_ctx_); }

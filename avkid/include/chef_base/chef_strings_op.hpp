@@ -1,5 +1,6 @@
 /**
- * @tag      v1.5.16
+ * @license  this file is a part of libchef. more info see https://github.com/q191201771/libchef
+ * @tag      v1.8.17
  * @file     chef_strings_op.hpp
  * @deps     nope
  * @platform linux | macos | windows
@@ -8,7 +9,7 @@
  *   chef <191201771@qq.com>
  *     - initial release xxxx-xx-xx
  *
- * @brief    std::string常用操作帮助函数集合
+ * @brief    字符串常用操作帮助函数集合
  *
  */
 
@@ -26,66 +27,19 @@ namespace chef {
   static const char TAB = '\t';
   static const char CR  = '\r';
   static const char LF  = '\n';
-  static const std::string DIGITS      = "0123456789";
-  static const std::string OCTDIGITS   = "01234567";
-  static const std::string HEXDIGITS   = "0123456789abcdefABCDEF";
-  static const std::string LETTERS     = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  static const std::string LOWERCASE   = "abcdefghijklmnopqrstuvwxyz";
-  static const std::string UPPERCASE   = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  static const std::string PUNCTUATION = "!\"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~";
-  static const std::string WHITESPACE  = " \t\n\r\x0b\x0c";
-  static const std::string PRINTABLE   = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~ \t\n\r\x0b\x0c";
+  static const std::string DIGITS          = "0123456789";
+  static const std::string OCTDIGITS       = "01234567";
+  static const std::string HEXDIGITS_UPPER = "0123456789ABCDEF";
+  static const std::string HEXDIGITS       = "0123456789abcdefABCDEF";
+  static const std::string LETTERS         = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  static const std::string LOWERCASE       = "abcdefghijklmnopqrstuvwxyz";
+  static const std::string UPPERCASE       = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  static const std::string PUNCTUATION     = "!\"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~";
+  static const std::string WHITESPACE      = " \t\n\r\x0b\x0c";
+  static const std::string PRINTABLE       = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~ \t\n\r\x0b\x0c";
 
   class strings_op {
     public:
-      /// @return   0 或 >0 或 <0
-      static int compare(const std::string &a, const std::string &b);
-
-      /// `s`是否包含子串`target`
-      static bool contains(const std::string &s, const std::string &target);
-
-      /// `s`中是否包含`charlist`中的一个或多个字符
-      static bool contains_any(const std::string &s, const std::string &charlist);
-
-      /// `s`中是否包含`charlist`中的所有字符
-      static bool contains_all(const std::string &s, const std::string &charlist);
-
-      /// `s`是否以`prefix`开头
-      static bool has_prefix(const std::string &s, const std::string &prefix);
-
-      /// `s`是否以`suffix`结束
-      static bool has_suffix(const std::string &s, const std::string &suffix);
-
-      /// `s`中包含多少个`target`
-      static int count(const std::string &s, const std::string &target);
-
-      /// 转小写
-      static std::string to_lower(const std::string &s);
-
-      /// 转大写
-      static std::string to_upper(const std::string &s);
-
-      /// 从`s`头部开始，移除`charlist`中的字符，直到遇到不属于`charlist`的字符停止
-      static std::string trim_left(const std::string &s, const std::string &charlist=WHITESPACE);
-
-      /// 从`s`尾部开始，移除`charlist`中的字符，直到遇到不属于`charlist`的字符停止
-      static std::string trim_right(const std::string &s, const std::string &charlist=WHITESPACE);
-
-      /// 如果`s`以`prefix`开头，则移除`prefix`
-      static std::string trim_prefix(const std::string &s, const std::string &prefix);
-
-      /// 如果`s`以`suffix`结束，则移除`suffix`
-      static std::string trim_suffix(const std::string &s, const std::string &suffix);
-
-      /// 把`s`中的`target`全部替换成`replacement`
-      static std::string replace(const std::string &s, const std::string &target, const std::string &replacement);
-
-      /// 把`s`中的第一个`target`替换成`replacement`
-      static std::string replace_first(const std::string &s, const std::string &target, const std::string &replacement);
-
-      /// 把`s`中的最后一个`target`替换成`replacement`
-      static std::string replace_last(const std::string &s, const std::string &target, const std::string &replacement);
-
       /**
        * 用`sep`分割`s`
        *
@@ -129,6 +83,33 @@ namespace chef {
       /// 把字符串数组`ss`用连接符`sep`连接起来，返回连接后的字符串
       static std::string join(const std::vector<std::string> &ss, const std::string &sep);
 
+      /// `s`是否以`prefix`开头
+      static bool has_prefix(const std::string &s, const std::string &prefix);
+
+      /// `s`是否以`suffix`结束
+      static bool has_suffix(const std::string &s, const std::string &suffix);
+
+      /// 从`s`头部开始，移除`charlist`中的字符，直到遇到不属于`charlist`的字符停止
+      static std::string trim_left(const std::string &s, const std::string &charlist=WHITESPACE);
+
+      /// 从`s`尾部开始，移除`charlist`中的字符，直到遇到不属于`charlist`的字符停止
+      static std::string trim_right(const std::string &s, const std::string &charlist=WHITESPACE);
+
+      /// 如果`s`以`prefix`开头，则移除`prefix`
+      static std::string trim_prefix(const std::string &s, const std::string &prefix);
+
+      /// 如果`s`以`suffix`结束，则移除`suffix`
+      static std::string trim_suffix(const std::string &s, const std::string &suffix);
+
+      /// 把`s`中的`target`全部替换成`replacement`
+      static std::string replace(const std::string &s, const std::string &target, const std::string &replacement);
+
+      /// 把`s`中的第一个`target`替换成`replacement`
+      static std::string replace_first(const std::string &s, const std::string &target, const std::string &replacement);
+
+      /// 把`s`中的最后一个`target`替换成`replacement`
+      static std::string replace_last(const std::string &s, const std::string &target, const std::string &replacement);
+
       ///
       template <class T>
       static std::string to_string(const T &t) {
@@ -136,6 +117,63 @@ namespace chef {
           ss << t;
           return ss.str();
       }
+
+      // 将文本中过长的行按固定宽度限制换行
+      // 比如 width 设置为16，那么以下文本
+      //
+      // hello,
+      // my name is chef,nice to meet u.
+      // The elements of the C language library are also included as a subset of the C++ Standard library.
+      // thx.
+      //
+      // 将被转换成
+      //
+      // hello,
+      // my name is chef,
+      // nice to meet u.
+      // The elements of
+      // the C language l
+      // ibrary are also
+      // included as a su
+      // bset of the C++
+      // Standard library
+      // .
+      // thx.
+      //
+      static std::string text_flow_wrap(const std::string &src, std::size_t width, const std::string &eol="\n");
+
+      // 类似于c字符串格式化函数snprintf，但不需要对结果的长度做预估，输出结果为std::string类型
+      // 举例：
+      //   std::string result = string_printf("(%d)(%s)(%.2f)", 18, "chef", 3.45);
+      //   // result -> "(18)(chef)(3.45)"
+      static std::string string_printf(const char *fmt, ...);
+
+      //
+      static std::string url_encode(const std::string &s);
+
+      // @NOTICE 如果输入不是合法的url编码格式的字符串，则返回空字符串
+      static std::string url_decode(const std::string &s);
+
+      /// @return   0 或 >0 或 <0
+      static int compare(const std::string &a, const std::string &b);
+
+      /// `s`是否包含子串`target`
+      static bool contains(const std::string &s, const std::string &target);
+
+      /// `s`中是否包含`charlist`中的一个或多个字符
+      static bool contains_any(const std::string &s, const std::string &charlist);
+
+      /// `s`中是否包含`charlist`中的所有字符
+      static bool contains_all(const std::string &s, const std::string &charlist);
+
+      /// `s`中包含多少个`target`
+      static int count(const std::string &s, const std::string &target);
+
+      /// 转小写
+      static std::string to_lower(const std::string &s);
+
+      /// 转大写
+      static std::string to_upper(const std::string &s);
 
     private:
       strings_op();
@@ -163,6 +201,7 @@ namespace chef {
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
 namespace chef {
 
@@ -469,6 +508,127 @@ namespace chef {
 
   inline std::string strings_op::trim_suffix(const std::string &s, const std::string &suffix) {
     return has_suffix(s, suffix) ? s.substr(0, s.length() - suffix.length()) : s;
+  }
+
+  inline std::string strings_op::text_flow_wrap(const std::string &src, std::size_t width, const std::string &eol) {
+    std::string ret;
+    std::vector<std::string> lines = split(src, eol, true);
+    std::vector<std::string>::iterator iter = lines.begin();
+    bool first = true;
+    for (; iter != lines.end(); iter++) {
+      if (iter->length() > width) {
+        std::size_t start = 0;
+        std::size_t len = iter->length();
+        for (; len > width; ) {
+          if (first) { first = false; } else { ret += eol; }
+
+          ret += iter->substr(start, width);
+          len -= width;
+          start += width;
+        }
+        if (len != 0) {
+          if (first) { first = false; } else { ret += eol; }
+
+          ret += iter->substr(start, width);
+        }
+      } else {
+        if (first) { first = false; } else { ret += eol; }
+
+        ret += *iter;
+      }
+    }
+
+    return ret;
+  }
+
+  inline std::string strings_op::string_printf(const char *fmt, ...) {
+    std::string result;
+    va_list args;
+    int fmt_len;
+    int default_buf_len = 1024;
+    char default_buf[1024] = {0};
+
+    va_start(args, fmt);
+    fmt_len = vsnprintf(default_buf, default_buf_len, fmt, args);
+    va_end(args);
+
+    if (fmt_len < 0) {
+      // error
+      return result;
+    } else if (fmt_len >= 0 && fmt_len < default_buf_len) {
+      // perfect
+      result.assign(default_buf, fmt_len);
+      return result;
+    }
+
+    // not enough
+    char *buf = new char[fmt_len+1];
+    va_start(args, fmt);
+    fmt_len = vsnprintf(buf, fmt_len+1, fmt, args);
+    va_end(args);
+
+    if (fmt_len > 0) {
+      result.assign(buf, fmt_len);
+    }
+    delete []buf;
+    return result;
+  }
+
+  inline std::string strings_op::url_encode(const std::string &s) {
+    if (s.empty()) { return s; }
+
+    std::string result;
+    result.reserve(s.length());
+    for (std::size_t i = 0; i < s.length(); i++) {
+      const char &ch = s[i];
+      if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') ||
+          ch == '-' || ch == '_' || ch == '.' || ch == '~')
+      {
+        result += ch;
+      } else if (ch == ' ') {
+        result += '+';
+      } else {
+        result += '%';
+        result += HEXDIGITS_UPPER[ch>>4];
+        result += HEXDIGITS_UPPER[ch&15];
+      }
+    }
+    return result;
+  }
+
+  static char unhex(char ch) {
+    if (ch >= '0' && ch <= '9') {
+      return ch - '0';
+    } else if (ch >= 'a' && ch <= 'z') {
+      return ch - 'a' + 10;
+    } else if (ch >= 'A' && ch <= 'Z') {
+      return ch - 'A' + 10;
+    }
+    return 0;
+  }
+
+  inline std::string strings_op::url_decode(const std::string &s) {
+    if (s.empty()) { return s; }
+
+    std::string result;
+    result.reserve(s.length());
+    for (std::size_t i = 0; i < s.length();) {
+      const char &ch = s[i];
+      if (ch == '%') {
+        if (i+2 >= s.length() || HEXDIGITS.find(s[i+1]) == std::string::npos || HEXDIGITS.find(s[i+2]) == std::string::npos) {
+          return std::string();
+        }
+        result += ((unhex(s[i+1]) << 4) | unhex(s[i+2]));
+        i += 3;
+      } else if (ch == '+') {
+        result += ' ';
+        i++;
+      } else {
+        result += ch;
+        i++;
+      }
+    }
+    return result;
   }
 
 } // namespace chef

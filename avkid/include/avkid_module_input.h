@@ -20,6 +20,7 @@ class Input : public ModuleBase, public PacketProducer {
     // TODO timeout
     bool open(const std::string &url, uint32_t timeout_msec=0);
 
+    // @return 如果全部读取完成返回true，发生错误则返回false
     bool read(uint32_t duration_ms=0);
 
     void stop_read() { stop_read_flag_ = true; }
@@ -29,6 +30,8 @@ class Input : public ModuleBase, public PacketProducer {
 
     CHEF_PROPERTY_WITH_INIT_VALUE(int, video_width, -1);
     CHEF_PROPERTY_WITH_INIT_VALUE(int, video_height, -1);
+    CHEF_PROPERTY_WITH_INIT_VALUE(int64_t, audio_duration_ms, -1);
+    CHEF_PROPERTY_WITH_INIT_VALUE(int64_t, video_duration_ms, -1);
 
   private:
     std::string url_;
@@ -36,8 +39,8 @@ class Input : public ModuleBase, public PacketProducer {
 
     int64_t first_audio_pts_   = -1;
     int64_t first_video_pts_   = -1;
-    int64_t audio_duration_ms_ = -1;
-    int64_t video_duration_ms_ = -1;
+    //int64_t audio_duration_ms_ = -1;
+    //int64_t video_duration_ms_ = -1;
     int64_t first_audio_dts_   = -1;
     int64_t first_video_dts_   = -1;
 

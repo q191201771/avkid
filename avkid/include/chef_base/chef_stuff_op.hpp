@@ -1,5 +1,6 @@
 /**
- * @tag      v1.5.15
+ * @license  this file is a part of libchef. more info see https://github.com/q191201771/libchef
+ * @tag      v1.8.17
  * @file     chef_stuff_op.hpp
  * @deps     nope
  * @platform linux | macos | xxx
@@ -73,6 +74,10 @@ namespace chef {
 
       static int read_be_int(const uint8_t *data, uint32_t n);
 
+    private:
+      stuff_op();
+      stuff_op(stuff_op &);
+      stuff_op &operator=(stuff_op &);
   };
 
 } // namespace chef
