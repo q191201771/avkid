@@ -3,7 +3,7 @@ CXXFLAGS += -I./avkid/include
 
 LINKFLAGS = -lavformat -lavcodec -lavutil -lavfilter -lswscale -lfdk-aac
 
-all: libavkid rtmp_bc rtmpdump rtmp_decode_encode mix
+all: libavkid rtmp_bc rtmpdump rtmp_decode_encode mix mp4_2_jpeg
 
 AVKID_HEADER = $(wildcard avkid/include/*.h)
 AVKID_HEADER += $(wildcard avkid/include/*.hpp)
@@ -32,6 +32,9 @@ rtmp_decode_encode: avkid/example/exe_rtmp_decode_encode.cc libavkid
 
 mix: avkid/example/exe_mix.cc libavkid
 	g++ $(CXXFLAGS) -o output/mix avkid/example/exe_mix.cc output/libavkid.a $(LINKFLAGS)
+
+mp4_2_jpeg: avkid/app/app_mp4_2_jpeg.cc libavkid
+	g++ $(CXXFLAGS) -o output/mp4_2_jpeg avkid/app/app_mp4_2_jpeg.cc output/libavkid.a $(LINKFLAGS)
 
 clean:
 	rm -rf output
