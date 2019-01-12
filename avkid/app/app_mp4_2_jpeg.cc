@@ -111,11 +111,6 @@ int main(int argc, char **argv) {
   } while(0);
 
   std::cerr << "Done. cost:" << chef::stuff_op::tick_msec() - bt << "ms, jpeg count:" << g_jpeg_count << "\n";
-  if (ret == APP_RET_NO_ERROR) {
-    std::cerr << g_jpeg_count << "\n";
-    return g_jpeg_count;
-  } else {
-    std::cerr << ret << "\n";
-    return ret;
-  }
+  std::cerr << "result:" << ret << " " << g_jpeg_count << "\n";
+  return ret;
 }
